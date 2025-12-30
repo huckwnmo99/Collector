@@ -72,6 +72,11 @@ export default function DashboardPage() {
     setCategories([...categories, response.data.category]);
   };
 
+  const handleUpdateCategory = async (id: string, name: string, color: string) => {
+    const response = await api.put(`/categories/${id}`, { name, color });
+    setCategories(categories.map((c) => (c.id === id ? response.data.category : c)));
+  };
+
   const handleDeleteCategory = async (id: string) => {
     await api.delete(`/categories/${id}`);
     setCategories(categories.filter((c) => c.id !== id));
@@ -165,6 +170,7 @@ export default function DashboardPage() {
         selectedCategoryId={selectedCategoryId}
         onSelectCategory={setSelectedCategoryId}
         onCreateCategory={handleCreateCategory}
+        onUpdateCategory={handleUpdateCategory}
         onDeleteCategory={handleDeleteCategory}
         onReorderCategories={handleReorderCategories}
         isCollapsed={isSidebarCollapsed}
