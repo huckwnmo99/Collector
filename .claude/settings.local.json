@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc --init)",
+      "Bash(npx prisma init)",
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(npx shadcn@latest init:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Skill(frontend-design:frontend-design)",
+      "Bash(npx prisma:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm run dev:*)",
+      "Bash(cat:*)",
+      "Bash(psql:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(timeout /t 5 /nobreak)",
+      "Bash(dir \"C:\\\\Users\\\\owner\\\\Desktop\\\\Sideproject\\\\2_personal\\\\8_web_collector\\\\cladue\\\\V1_collector\\\\frontend\"\" | findstr /i \"env \")",
+      "Bash(timeout /t 2 /nobreak)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)",
+      "Bash(pushd:*)",
+      "Bash(npm run build:*)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(del \"\\\\?\\\\C:\\\\Users\\\\owner\\\\Desktop\\\\Sideproject\\\\2_personal\\\\8_web_collector\\\\cladue\\\\V1_collector\\\\nul\")"
+    ]
+  }
+}
