@@ -27,7 +27,9 @@
       "Bash(npm run build:*)",
       "Bash(git init:*)",
       "Bash(git remote add:*)",
-      "Bash(del \"\\\\?\\\\C:\\\\Users\\\\owner\\\\Desktop\\\\Sideproject\\\\2_personal\\\\8_web_collector\\\\cladue\\\\V1_collector\\\\nul\")"
+      "Bash(del \"\\\\?\\\\C:\\\\Users\\\\owner\\\\Desktop\\\\Sideproject\\\\2_personal\\\\8_web_collector\\\\cladue\\\\V1_collector\\\\nul\")",
+      "Bash(git branch:*)",
+      "Bash(git push:*)"
     ]
   }
 }
