@@ -1,20 +1,29 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+// Supabase 클라이언트 생성 함수 (lazy initialization)
+function createSupabaseClient() {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Missing Supabase environment variables');
+  }
+  return createClient(supabaseUrl, supabaseAnonKey);
+}
+
+function createSupabaseAdminClient() {
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('Missing Supabase admin environment variables');
+  }
+  return createClient(supabaseUrl, supabaseServiceKey);
+}
 
 // Client-side Supabase client (limited permissions)
-export const supabase: SupabaseClient = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder'
-);
+export const supabase: SupabaseClient = createSupabaseClient();
 
 // Server-side Supabase client (full permissions) - only use in API routes
-export const supabaseAdmin: SupabaseClient = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseServiceKey || 'placeholder'
-);
+export const supabaseAdmin: SupabaseClient = createSupabaseAdminClient();
 
 // Database types
 export interface DbUser {
