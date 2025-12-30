@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       .from('links')
       .select('*')
       .eq('user_id', authUser.userId)
-      .order('created_at', { ascending: false });
+      .order('order_index', { ascending: true });
 
     if (categoryId) {
       query = query.eq('category_id', categoryId);
@@ -62,6 +62,17 @@ export async function POST(request: NextRequest) {
       // Invalid URL, skip favicon
     }
 
+    // Get max order_index for new link
+    const { data: maxOrderData } = await supabaseAdmin
+      .from('links')
+      .select('order_index')
+      .eq('user_id', authUser.userId)
+      .order('order_index', { ascending: false })
+      .limit(1)
+      .single();
+
+    const newOrderIndex = (maxOrderData?.order_index ?? -1) + 1;
+
     const { data: link, error } = await supabaseAdmin
       .from('links')
       .insert({
@@ -70,6 +81,7 @@ export async function POST(request: NextRequest) {
         title,
         url,
         favicon,
+        order_index: newOrderIndex,
       })
       .select('*')
       .single();

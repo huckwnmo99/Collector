@@ -17,14 +17,11 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'linkIds must be an array' }, { status: 400 });
     }
 
-    // Update order for each link using updated_at as a proxy for order
-    // We'll use the array index to set a consistent order
+    // Update order_index for each link
     const updates = linkIds.map((id, index) =>
       supabaseAdmin
         .from('links')
-        .update({
-          updated_at: new Date(Date.now() - index * 1000).toISOString()
-        })
+        .update({ order_index: index })
         .eq('id', id)
         .eq('user_id', authUser.userId)
     );
