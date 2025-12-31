@@ -13,6 +13,13 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Web Collector",
   description: "Your personal bookmark manager",
+  icons: {
+    icon: [
+      { url: "/icon.png", sizes: "256x256", type: "image/png" },
+      { url: "/favicon.ico", sizes: "32x32" },
+    ],
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({

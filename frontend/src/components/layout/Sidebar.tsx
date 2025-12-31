@@ -268,11 +268,11 @@ export function Sidebar({
         <div className="p-4 flex items-center justify-between">
           {!isCollapsed && (
             <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-                <svg className="w-4 h-4 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-              </div>
+              <img
+                src="/icon.png"
+                alt="Web Collector"
+                className="w-7 h-7 rounded-lg"
+              />
               <span className="text-sidebar-foreground text-base font-semibold">
                 Web Collector
               </span>
