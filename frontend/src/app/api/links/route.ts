@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { title, url, categoryId } = await request.json();
+    const { title, url, categoryId, memo } = await request.json();
 
     if (!title || !url) {
       return NextResponse.json({ error: 'Title and URL are required' }, { status: 400 });
@@ -81,6 +81,7 @@ export async function POST(request: NextRequest) {
         title,
         url,
         favicon,
+        memo: memo || null,
         order_index: newOrderIndex,
       })
       .select('*')

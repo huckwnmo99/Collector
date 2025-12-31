@@ -22,6 +22,7 @@ export interface Link {
   title: string;
   url: string;
   favicon: string | null;
+  memo: string | null;
   created_at: string;
   updated_at: string;
 }

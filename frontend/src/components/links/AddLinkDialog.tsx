@@ -15,7 +15,7 @@ import { Category, Link } from '@/types';
 interface AddLinkDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (title: string, url: string, categoryId?: string) => Promise<void>;
+  onSubmit: (title: string, url: string, categoryId?: string, memo?: string) => Promise<void>;
   categories: Category[];
   selectedCategoryId: string | null;
   editingLink?: Link | null;
@@ -34,6 +34,7 @@ export function AddLinkDialog({
     title: '',
     url: '',
     categoryId: selectedCategoryId || '',
+    memo: '',
   });
 
   useEffect(() => {
@@ -42,12 +43,14 @@ export function AddLinkDialog({
         title: editingLink.title,
         url: editingLink.url,
         categoryId: editingLink.category_id || '',
+        memo: editingLink.memo || '',
       });
     } else {
       setFormData({
         title: '',
         url: '',
         categoryId: selectedCategoryId || '',
+        memo: '',
       });
     }
   }, [editingLink, selectedCategoryId, isOpen]);
@@ -69,8 +72,8 @@ export function AddLinkDialog({
         }
       }
 
-      await onSubmit(title, formData.url, formData.categoryId || undefined);
-      setFormData({ title: '', url: '', categoryId: selectedCategoryId || '' });
+      await onSubmit(title, formData.url, formData.categoryId || undefined, formData.memo || undefined);
+      setFormData({ title: '', url: '', categoryId: selectedCategoryId || '', memo: '' });
       onClose();
     } catch (error) {
       console.error('Failed to add link:', error);
@@ -131,6 +134,19 @@ export function AddLinkDialog({
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">
+              Memo <span className="text-muted-foreground text-xs">(optional)</span>
+            </Label>
+            <textarea
+              placeholder="Add a note about this link..."
+              value={formData.memo}
+              onChange={(e) => setFormData({ ...formData, memo: e.target.value })}
+              className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              rows={3}
+            />
           </div>
 
           <div className="flex gap-3 pt-2">

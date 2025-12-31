@@ -267,13 +267,13 @@ export function Sidebar({
         {/* Header */}
         <div className="p-4 flex items-center justify-between">
           {!isCollapsed && (
-            <Link href="/dashboard" className="flex items-center gap-2">
+            <Link href="/dashboard" className="flex items-center gap-3">
               <img
                 src="/icon.png"
                 alt="Web Collector"
-                className="w-7 h-7 rounded-lg"
+                className="w-10 h-10 rounded-lg"
               />
-              <span className="text-sidebar-foreground text-base font-semibold">
+              <span className="text-sidebar-foreground text-lg font-semibold">
                 Web Collector
               </span>
             </Link>

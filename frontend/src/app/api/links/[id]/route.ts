@@ -15,7 +15,7 @@ export async function PUT(
     }
 
     const { id } = await params;
-    const { title, url, categoryId } = await request.json();
+    const { title, url, categoryId, memo } = await request.json();
 
     // Verify ownership
     const { data: existingLink } = await supabaseAdmin
@@ -45,6 +45,7 @@ export async function PUT(
       }
     }
     if (categoryId !== undefined) updateData.category_id = categoryId || null;
+    if (memo !== undefined) updateData.memo = memo || null;
 
     const { data: link, error } = await supabaseAdmin
       .from('links')
