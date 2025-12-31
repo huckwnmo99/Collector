@@ -1,8 +1,10 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 
 // 환경변수를 함수 내에서 읽어서 런타임에 평가되도록 함
 let _supabase: SupabaseClient | null = null;
 let _supabaseAdmin: SupabaseClient | null = null;
+let _supabaseBrowser: SupabaseClient | null = null;
 
 export function getSupabase(): SupabaseClient {
   if (!_supabase) {
@@ -14,6 +16,19 @@ export function getSupabase(): SupabaseClient {
     _supabase = createClient(url, key);
   }
   return _supabase;
+}
+
+// 브라우저용 Supabase 클라이언트 (OAuth 등 Auth 기능용)
+export function getSupabaseBrowser(): SupabaseClient {
+  if (!_supabaseBrowser) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) {
+      throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY');
+    }
+    _supabaseBrowser = createBrowserClient(url, key);
+  }
+  return _supabaseBrowser;
 }
 
 export function getSupabaseAdmin(): SupabaseClient {
