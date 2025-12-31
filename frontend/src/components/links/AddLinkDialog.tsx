@@ -72,7 +72,7 @@ export function AddLinkDialog({
         }
       }
 
-      await onSubmit(title, formData.url, formData.categoryId || undefined, formData.memo || undefined);
+      await onSubmit(title, formData.url, formData.categoryId || undefined, formData.memo);
       setFormData({ title: '', url: '', categoryId: selectedCategoryId || '', memo: '' });
       onClose();
     } catch (error) {

@@ -172,6 +172,7 @@ export function Sidebar({
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [customColor, setCustomColor] = useState('');
+  const [newCustomColor, setNewCustomColor] = useState(colorOptions[0]);
 
   const handleEditCategory = (category: Category) => {
     setEditCategory({ id: category.id, name: category.name, color: category.color });
@@ -237,6 +238,7 @@ export function Sidebar({
     try {
       await onCreateCategory(newCategory.name, newCategory.color);
       setNewCategory({ name: '', color: colorOptions[0] });
+      setNewCustomColor(colorOptions[0]);
       setIsOpen(false);
       toast.success('Category created!');
     } catch (error) {
@@ -362,7 +364,10 @@ export function Sidebar({
                         {colorOptions.map((color) => (
                           <button
                             key={color}
-                            onClick={() => setNewCategory({ ...newCategory, color })}
+                            onClick={() => {
+                              setNewCategory({ ...newCategory, color });
+                              setNewCustomColor(color);
+                            }}
                             className={`
                               w-8 h-8 rounded-full transition-all duration-200
                               ${newCategory.color === color ? 'ring-2 ring-offset-2 ring-offset-background ring-foreground scale-110' : 'hover:scale-105'}
@@ -370,6 +375,33 @@ export function Sidebar({
                             style={{ backgroundColor: color }}
                           />
                         ))}
+                      </div>
+                      {/* Custom Color Input */}
+                      <div className="flex items-center gap-2 mt-3">
+                        <Label className="text-xs text-muted-foreground">Custom:</Label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={newCustomColor}
+                            onChange={(e) => {
+                              setNewCustomColor(e.target.value);
+                              setNewCategory({ ...newCategory, color: e.target.value });
+                            }}
+                            className="w-8 h-8 rounded cursor-pointer border-0"
+                          />
+                          <Input
+                            value={newCustomColor}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setNewCustomColor(val);
+                              if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                                setNewCategory({ ...newCategory, color: val });
+                              }
+                            }}
+                            placeholder="#000000"
+                            className="h-8 w-24 text-xs font-mono"
+                          />
+                        </div>
                       </div>
                     </div>
                     <Button

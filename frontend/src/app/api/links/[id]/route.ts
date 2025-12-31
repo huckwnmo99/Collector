@@ -45,7 +45,7 @@ export async function PUT(
       }
     }
     if (categoryId !== undefined) updateData.category_id = categoryId || null;
-    if (memo !== undefined) updateData.memo = memo || null;
+    if (memo !== undefined) updateData.memo = memo === '' ? null : memo;
 
     const { data: link, error } = await supabaseAdmin
       .from('links')
