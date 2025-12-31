@@ -194,7 +194,7 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 font-medium btn-press"
+                className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 font-medium btn-press cursor-pointer"
               >
                 {isLoading ? (
                   <span className="flex items-center gap-2">
@@ -237,7 +237,7 @@ export default function LoginPage() {
                 variant="outline"
                 onClick={handleGoogleLogin}
                 disabled={isGoogleLoading}
-                className="w-full h-11 border-border hover:bg-accent transition-all duration-200 font-medium"
+                className="w-full h-11 border-border hover:bg-accent transition-all duration-200 font-medium cursor-pointer"
               >
                 {isGoogleLoading ? (
                   <span className="flex items-center gap-2">
