@@ -84,12 +84,12 @@ export function LinkCard({ link, onEdit, onDelete }: LinkCardProps) {
       </div>
 
       {/* Favicon */}
-      <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center mb-4 overflow-hidden">
+      <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center mb-4 overflow-hidden">
         {faviconUrl && !imageError ? (
           <img
             src={faviconUrl}
             alt=""
-            className="w-8 h-8 object-contain"
+            className="w-14 h-14 object-contain"
             onError={() => setImageError(true)}
           />
         ) : (
