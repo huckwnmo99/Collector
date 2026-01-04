@@ -28,6 +28,7 @@ interface LinkGridProps {
   onReorder?: (linkIds: string[]) => Promise<void>;
   isLoading?: boolean;
   groupByCategory?: boolean;
+  viewMode?: 'grid' | 'list';
 }
 
 // Sortable Link Card Wrapper
@@ -74,7 +75,8 @@ export function LinkGrid({
   onDelete,
   onReorder,
   isLoading,
-  groupByCategory = false
+  groupByCategory = false,
+  viewMode = 'grid'
 }: LinkGridProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -161,6 +163,107 @@ export function LinkGrid({
     // Sort categories by order_index
     const sortedCategories = [...categories].sort((a, b) => a.order_index - b.order_index);
 
+    // List view (Kanban style - soft shadow columns)
+    if (viewMode === 'list') {
+      // Filter categories with links
+      const categoriesWithLinks = sortedCategories.filter(
+        category => (groupedLinks[category.id] || []).length > 0
+      );
+
+      return (
+        <div className="flex gap-5 overflow-x-auto pb-4">
+          {/* Categorized links */}
+          {categoriesWithLinks.map((category) => {
+            const categoryLinks = groupedLinks[category.id] || [];
+
+            return (
+              <div
+                key={category.id}
+                className="flex-shrink-0 w-72 bg-card/50 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
+              >
+                {/* Category Header */}
+                <div className="flex items-center gap-2 mb-4">
+                  <div
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: category.color }}
+                  />
+                  <h2 className="text-sm font-medium text-foreground truncate flex-1">
+                    {category.name}
+                  </h2>
+                  <span className="text-xs text-muted-foreground">
+                    {categoryLinks.length}
+                  </span>
+                </div>
+
+                {/* Links List */}
+                <div className="space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto">
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={categoryLinks.map((l) => l.id)}
+                      strategy={rectSortingStrategy}
+                    >
+                      {categoryLinks.map((link) => (
+                        <SortableLinkCard
+                          key={link.id}
+                          link={link}
+                          onEdit={onEdit}
+                          onDelete={onDelete}
+                        />
+                      ))}
+                    </SortableContext>
+                  </DndContext>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Uncategorized links */}
+          {uncategorizedLinks.length > 0 && (
+            <div className="flex-shrink-0 w-72 bg-card/50 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+              {/* Uncategorized Header */}
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-2 h-2 rounded-full shrink-0 bg-muted-foreground/40" />
+                <h2 className="text-sm font-medium text-foreground truncate flex-1">
+                  Uncategorized
+                </h2>
+                <span className="text-xs text-muted-foreground">
+                  {uncategorizedLinks.length}
+                </span>
+              </div>
+
+              {/* Links List */}
+              <div className="space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto">
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={uncategorizedLinks.map((l) => l.id)}
+                    strategy={rectSortingStrategy}
+                  >
+                    {uncategorizedLinks.map((link) => (
+                      <SortableLinkCard
+                        key={link.id}
+                        link={link}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Grid view (default)
     return (
       <div className="space-y-8">
         {/* Categorized links */}
