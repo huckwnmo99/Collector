@@ -15,8 +15,7 @@ export const metadata: Metadata = {
   description: "Your personal bookmark manager",
   icons: {
     icon: [
-      { url: "/icon.png", sizes: "256x256", type: "image/png" },
-      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/icon.png", sizes: "1280x1280", type: "image/png" },
     ],
     apple: "/icon.png",
   },

@@ -29,7 +29,8 @@
       "Bash(git remote add:*)",
       "Bash(del \"\\\\?\\\\C:\\\\Users\\\\owner\\\\Desktop\\\\Sideproject\\\\2_personal\\\\8_web_collector\\\\cladue\\\\V1_collector\\\\nul\")",
       "Bash(git branch:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\n파비콘 설정 수정 및 로컬 개발 환경 DNS 문제 해결\n\n- package.json: Node.js DNS IPv4 우선 옵션 추가\n- layout.tsx: 아이콘 크기 설정 수정 \\(1280x1280\\)\n- favicon.ico 제거 \\(불필요\\)\n- icon.png, Sidebar.tsx 업데이트\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }
