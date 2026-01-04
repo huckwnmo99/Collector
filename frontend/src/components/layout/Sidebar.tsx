@@ -273,7 +273,7 @@ export function Sidebar({
               <img
                 src="/icon.png"
                 alt="Web Collector"
-                className="w-20 h-20 rounded-lg"
+                className="w-11 h-11 rounded-lg"
               />
               <span className="text-sidebar-foreground text-lg font-semibold">
                 Web Collector
