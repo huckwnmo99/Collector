@@ -15,7 +15,7 @@ export async function PUT(
     }
 
     const { id } = await params;
-    const { title, url, categoryId, memo } = await request.json();
+    const { title, url, categoryId, memo, showFavicon } = await request.json();
 
     // Verify ownership
     const { data: existingLink } = await supabaseAdmin
@@ -39,13 +39,14 @@ export async function PUT(
       // Update favicon if URL changed
       try {
         const urlObj = new URL(url);
-        updateData.favicon = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
+        updateData.favicon = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=128`;
       } catch {
         // Invalid URL, skip favicon update
       }
     }
     if (categoryId !== undefined) updateData.category_id = categoryId || null;
     if (memo !== undefined) updateData.memo = memo === '' ? null : memo;
+    if (showFavicon !== undefined) updateData.show_favicon = showFavicon;
 
     const { data: link, error } = await supabaseAdmin
       .from('links')

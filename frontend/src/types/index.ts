@@ -22,6 +22,7 @@ export interface Link {
   title: string;
   url: string;
   favicon: string | null;
+  show_favicon: boolean;
   memo: string | null;
   created_at: string;
   updated_at: string;
@@ -52,7 +53,7 @@ export interface LinkState {
   isLoading: boolean;
   fetchLinks: (categoryId?: string) => Promise<void>;
   createLink: (title: string, url: string, categoryId?: string) => Promise<void>;
-  updateLink: (id: string, title: string, url: string, categoryId?: string) => Promise<void>;
+  updateLink: (id: string, title: string, url: string, categoryId?: string, memo?: string, showFavicon?: boolean) => Promise<void>;
   deleteLink: (id: string) => Promise<void>;
   reorderLinks: (linkIds: string[]) => Promise<void>;
 }

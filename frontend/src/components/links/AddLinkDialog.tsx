@@ -15,7 +15,7 @@ import { Category, Link } from '@/types';
 interface AddLinkDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (title: string, url: string, categoryId?: string, memo?: string) => Promise<void>;
+  onSubmit: (title: string, url: string, categoryId?: string, memo?: string, showFavicon?: boolean) => Promise<void>;
   categories: Category[];
   selectedCategoryId: string | null;
   editingLink?: Link | null;
@@ -35,6 +35,7 @@ export function AddLinkDialog({
     url: '',
     categoryId: selectedCategoryId || '',
     memo: '',
+    showFavicon: true,
   });
 
   useEffect(() => {
@@ -44,6 +45,7 @@ export function AddLinkDialog({
         url: editingLink.url,
         categoryId: editingLink.category_id || '',
         memo: editingLink.memo || '',
+        showFavicon: editingLink.show_favicon !== false,
       });
     } else {
       setFormData({
@@ -51,6 +53,7 @@ export function AddLinkDialog({
         url: '',
         categoryId: selectedCategoryId || '',
         memo: '',
+        showFavicon: true,
       });
     }
   }, [editingLink, selectedCategoryId, isOpen]);
@@ -72,8 +75,8 @@ export function AddLinkDialog({
         }
       }
 
-      await onSubmit(title, formData.url, formData.categoryId || undefined, formData.memo);
-      setFormData({ title: '', url: '', categoryId: selectedCategoryId || '', memo: '' });
+      await onSubmit(title, formData.url, formData.categoryId || undefined, formData.memo, formData.showFavicon);
+      setFormData({ title: '', url: '', categoryId: selectedCategoryId || '', memo: '', showFavicon: true });
       onClose();
     } catch (error) {
       console.error('Failed to add link:', error);
@@ -84,14 +87,14 @@ export function AddLinkDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-semibold text-lg">
             {editingLink ? 'Edit Link' : 'Add New Link'}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-5 mt-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
             <Label className="text-sm font-medium">
               URL <span className="text-destructive">*</span>
@@ -147,6 +150,24 @@ export function AddLinkDialog({
               className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
               rows={3}
             />
+          </div>
+
+          <div
+            className="flex items-center justify-between py-2 px-3 rounded-lg border border-border bg-muted/30 cursor-pointer"
+            onClick={() => setFormData({ ...formData, showFavicon: !formData.showFavicon })}
+          >
+            <span className="text-sm font-medium">Show Favicon</span>
+            <div
+              className={`relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors ${
+                formData.showFavicon ? 'bg-blue-500' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-5 w-5 mt-0.5 rounded-full bg-white shadow transition-transform ${
+                  formData.showFavicon ? 'translate-x-[22px]' : 'translate-x-0.5'
+                }`}
+              />
+            </div>
           </div>
 
           <div className="flex gap-3 pt-2">

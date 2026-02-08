@@ -22,13 +22,14 @@ export function LinkCard({ link, onEdit, onDelete }: LinkCardProps) {
   const getFaviconUrl = (url: string) => {
     try {
       const domain = new URL(url).hostname;
-      return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
     } catch {
       return null;
     }
   };
 
-  const faviconUrl = link.favicon || getFaviconUrl(link.url);
+  const showFavicon = link.show_favicon !== false;
+  const faviconUrl = showFavicon ? (link.favicon || getFaviconUrl(link.url)) : null;
 
   const handleClick = () => {
     window.open(link.url, '_blank', 'noopener,noreferrer');

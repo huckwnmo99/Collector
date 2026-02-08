@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { title, url, categoryId, memo } = await request.json();
+    const { title, url, categoryId, memo, showFavicon } = await request.json();
 
     if (!title || !url) {
       return NextResponse.json({ error: 'Title and URL are required' }, { status: 400 });
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     let favicon = null;
     try {
       const urlObj = new URL(url);
-      favicon = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
+      favicon = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=128`;
     } catch {
       // Invalid URL, skip favicon
     }
@@ -81,6 +81,7 @@ export async function POST(request: NextRequest) {
         title,
         url,
         favicon,
+        show_favicon: showFavicon !== undefined ? showFavicon : true,
         memo: memo || null,
         order_index: newOrderIndex,
       })

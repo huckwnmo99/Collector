@@ -1,0 +1,36 @@
+appId: com.webcollector.app
+productName: Web Collector
+copyright: Copyright © 2026
+
+directories:
+  output: dist-installer
+  buildResources: resources
+
+files:
+  - dist-electron/**/*
+  - "!node_modules"
+
+extraResources:
+  - from: .next/standalone
+    to: standalone
+    filter:
+      - "**/*"
+  - from: resources/icon.png
+    to: icon.png
+  - from: resources/tray-icon.png
+    to: tray-icon.png
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: resources/icon.ico
+
+nsis:
+  oneClick: true
+  perMachine: false
+  allowToChangeInstallationDirectory: false
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Web Collector
