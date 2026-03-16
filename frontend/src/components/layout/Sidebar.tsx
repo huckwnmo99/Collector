@@ -248,6 +248,14 @@ export function Sidebar({
     }
   };
 
+  // 모바일에서 카테고리 선택 시 사이드바 닫기
+  const handleSelectCategory = (id: string | null) => {
+    onSelectCategory(id);
+    if (window.innerWidth < 768) {
+      onToggleCollapse();
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -258,11 +266,22 @@ export function Sidebar({
   };
 
   return (
+    <>
+    {/* 모바일 백드롭 */}
+    {!isCollapsed && (
+      <div
+        className="fixed inset-0 bg-black/50 z-40 md:hidden"
+        onClick={onToggleCollapse}
+      />
+    )}
     <aside
       className={`
         fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border
-        transition-all duration-300 ease-in-out z-40
-        ${isCollapsed ? 'w-16' : 'w-64'}
+        transition-all duration-300 ease-in-out z-50
+        ${isCollapsed
+          ? 'w-16 max-md:-translate-x-full'
+          : 'w-full md:w-64'
+        }
       `}
     >
       <div className="flex flex-col h-full">
@@ -304,7 +323,7 @@ export function Sidebar({
         <div className="p-3">
           <Button
             variant={selectedCategoryId === null ? 'secondary' : 'ghost'}
-            onClick={() => onSelectCategory(null)}
+            onClick={() => handleSelectCategory(null)}
             className={`
               w-full justify-start gap-3 h-10
               ${selectedCategoryId === null
@@ -434,7 +453,7 @@ export function Sidebar({
                       category={category}
                       isSelected={selectedCategoryId === category.id}
                       isCollapsed={isCollapsed}
-                      onSelect={() => onSelectCategory(category.id)}
+                      onSelect={() => handleSelectCategory(category.id)}
                       onEdit={() => handleEditCategory(category)}
                       onDelete={() => onDeleteCategory(category.id)}
                     />
@@ -552,5 +571,6 @@ export function Sidebar({
         </div>
       </div>
     </aside>
+    </>
   );
 }
