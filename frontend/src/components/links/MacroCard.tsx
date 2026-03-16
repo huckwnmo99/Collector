@@ -29,12 +29,20 @@ export function MacroCard({ link, onEdit, onDelete }: MacroCardProps) {
   const handleClick = () => {
     if (items.length === 0) return;
 
-    // Open all URLs in new tabs
-    items.forEach((item) => {
-      const url = item.resolved_url || item.custom_url;
-      if (url) {
+    const urls = items
+      .map((item) => item.resolved_url || item.custom_url)
+      .filter(Boolean) as string[];
+
+    if (urls.length === 0) return;
+
+    // Open first tab immediately (user-initiated, won't be blocked)
+    window.open(urls[0], '_blank', 'noopener,noreferrer');
+
+    // Open remaining tabs with staggered delays to avoid popup blocker
+    urls.slice(1).forEach((url, index) => {
+      setTimeout(() => {
         window.open(url, '_blank', 'noopener,noreferrer');
-      }
+      }, (index + 1) * 300);
     });
   };
 
@@ -89,10 +97,10 @@ export function MacroCard({ link, onEdit, onDelete }: MacroCardProps) {
 
       {/* Stacked card icon with favicon + count badge */}
       <div className="relative w-14 h-14 md:w-16 md:h-16 mx-auto mb-3 md:mb-4">
-        {/* Back card (offset) */}
-        <div className="absolute top-1 left-1 w-full h-full rounded-lg bg-muted/60 border border-border/50" />
-        {/* Middle card (slight offset) */}
-        <div className="absolute top-0.5 left-0.5 w-full h-full rounded-lg bg-muted/80 border border-border/70" />
+        {/* Back card */}
+        <div className="absolute top-2.5 left-2 w-full h-full rounded-lg bg-muted/50 border border-border/40 rotate-[6deg]" />
+        {/* Middle card */}
+        <div className="absolute top-1 left-1 w-full h-full rounded-lg bg-muted/70 border border-border/60 rotate-[3deg]" />
         {/* Front card with favicon */}
         <div className="relative w-full h-full rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden">
           {faviconUrl && !imageError ? (
@@ -103,7 +111,6 @@ export function MacroCard({ link, onEdit, onDelete }: MacroCardProps) {
               onError={() => setImageError(true)}
             />
           ) : (
-            /* Stack/layers icon as fallback */
             <svg className="w-6 h-6 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L12 12.75 6.429 9.75m11.142 0l4.179 2.25L12 17.25 2.25 12l4.179-2.25m11.142 0l4.179 2.25L12 22.5l-9.75-5.25 4.179-2.25" />
             </svg>
@@ -124,7 +131,7 @@ export function MacroCard({ link, onEdit, onDelete }: MacroCardProps) {
         {items.length} {items.length === 1 ? 'site' : 'sites'}
       </p>
 
-      {/* Hover indicator - purple/accent for macro distinction */}
+      {/* Hover indicator */}
       <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left rounded-b-xl" />
     </div>
   );
