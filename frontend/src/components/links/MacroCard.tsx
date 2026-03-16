@@ -35,10 +35,15 @@ export function MacroCard({ link, onEdit, onDelete }: MacroCardProps) {
 
     if (urls.length === 0) return;
 
-    // Open first tab immediately (user-initiated, won't be blocked)
-    window.open(urls[0], '_blank', 'noopener,noreferrer');
+    // Electron: use IPC to open all URLs reliably
+    const electronAPI = (window as unknown as { electronAPI?: { openUrls?: (urls: string[]) => Promise<void> } }).electronAPI;
+    if (electronAPI?.openUrls) {
+      electronAPI.openUrls(urls);
+      return;
+    }
 
-    // Open remaining tabs with staggered delays to avoid popup blocker
+    // Browser: staggered open to avoid popup blocker
+    window.open(urls[0], '_blank', 'noopener,noreferrer');
     urls.slice(1).forEach((url, index) => {
       setTimeout(() => {
         window.open(url, '_blank', 'noopener,noreferrer');

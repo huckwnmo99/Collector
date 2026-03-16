@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell } from 'electron';
+import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import path from 'path';
 import { startNextServer, stopNextServer } from './next-server';
 import { createTray, destroyTray } from './tray';
@@ -73,6 +73,15 @@ async function createWindow() {
       shell.openExternal(url);
     }
     return { action: 'deny' };
+  });
+
+  // IPC: open multiple URLs in default browser
+  ipcMain.handle('open-urls', async (_event, urls: string[]) => {
+    for (const url of urls) {
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        await shell.openExternal(url);
+      }
+    }
   });
 
   // Create system tray
