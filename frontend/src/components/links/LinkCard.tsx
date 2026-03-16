@@ -37,7 +37,7 @@ export function LinkCard({ link, onEdit, onDelete }: LinkCardProps) {
 
   return (
     <div
-      className="group relative bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden"
+      className="group relative bg-card border border-border rounded-xl p-3 md:p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden"
       onClick={handleClick}
     >
       {/* Menu Button */}
@@ -85,12 +85,12 @@ export function LinkCard({ link, onEdit, onDelete }: LinkCardProps) {
       </div>
 
       {/* Favicon */}
-      <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center mb-4 overflow-hidden">
+      <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg bg-muted flex items-center justify-center mb-3 md:mb-4 mx-auto overflow-hidden">
         {faviconUrl && !imageError ? (
           <img
             src={faviconUrl}
             alt=""
-            className="w-14 h-14 object-contain"
+            className="w-12 h-12 md:w-14 md:h-14 object-contain"
             onError={() => setImageError(true)}
           />
         ) : (
@@ -101,10 +101,10 @@ export function LinkCard({ link, onEdit, onDelete }: LinkCardProps) {
       </div>
 
       {/* Content */}
-      <h3 className="font-medium text-sm truncate mb-1 group-hover:text-primary transition-colors">
+      <h3 className="font-medium text-sm md:text-sm truncate mb-1 group-hover:text-primary transition-colors">
         {link.title}
       </h3>
-      <p className="text-xs text-muted-foreground truncate">
+      <p className="text-[11px] md:text-xs text-muted-foreground truncate">
         {new URL(link.url).hostname.replace('www.', '')}
       </p>
 
