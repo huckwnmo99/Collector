@@ -81,6 +81,7 @@ export interface DbLink {
   title: string;
   url: string;
   favicon: string | null;
+  type: string;
   created_at: string;
   updated_at: string;
 }

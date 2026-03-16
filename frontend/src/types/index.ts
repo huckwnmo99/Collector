@@ -24,8 +24,30 @@ export interface Link {
   favicon: string | null;
   show_favicon: boolean;
   memo: string | null;
+  type: 'link' | 'macro';
+  macro_items?: MacroItem[];
   created_at: string;
   updated_at: string;
+}
+
+export interface MacroItem {
+  id: string;
+  macro_id: string;
+  link_id: string | null;
+  custom_url: string | null;
+  custom_title: string | null;
+  custom_favicon: string | null;
+  order_index: number;
+  resolved_url?: string;
+  resolved_title?: string;
+  resolved_favicon?: string;
+}
+
+export interface MacroItemInput {
+  link_id?: string;
+  custom_url?: string;
+  custom_title?: string;
+  order_index: number;
 }
 
 export interface AuthState {

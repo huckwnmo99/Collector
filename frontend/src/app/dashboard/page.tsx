@@ -4,11 +4,18 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { LinkGrid } from '@/components/links/LinkGrid';
 import { AddLinkDialog } from '@/components/links/AddLinkDialog';
+import { AddMacroDialog } from '@/components/links/AddMacroDialog';
 import { useAuthStore } from '@/store/authStore';
-import { Category, Link } from '@/types';
+import { Category, Link, MacroItemInput } from '@/types';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -22,6 +29,8 @@ export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddLinkOpen, setIsAddLinkOpen] = useState(false);
   const [editingLink, setEditingLink] = useState<Link | null>(null);
+  const [isAddMacroOpen, setIsAddMacroOpen] = useState(false);
+  const [editingMacro, setEditingMacro] = useState<Link | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
   );
@@ -129,15 +138,43 @@ export default function DashboardPage() {
     }
   };
 
+  // Macro actions
+  const handleAddMacro = async (title: string, categoryId: string | undefined, macroItems: MacroItemInput[]) => {
+    if (editingMacro) {
+      const response = await api.put(`/links/${editingMacro.id}`, {
+        title,
+        categoryId,
+        macroItems,
+      });
+      setLinks(links.map((l) => (l.id === editingMacro.id ? response.data.link : l)));
+      setEditingMacro(null);
+      toast.success('Macro updated!');
+    } else {
+      const response = await api.post('/links', {
+        title,
+        categoryId,
+        type: 'macro',
+        macroItems,
+      });
+      setLinks([response.data.link, ...links]);
+      toast.success('Macro created!');
+    }
+  };
+
   const handleEditLink = (link: Link) => {
-    setEditingLink(link);
-    setIsAddLinkOpen(true);
+    if (link.type === 'macro') {
+      setEditingMacro(link);
+      setIsAddMacroOpen(true);
+    } else {
+      setEditingLink(link);
+      setIsAddLinkOpen(true);
+    }
   };
 
   const handleDeleteLink = async (id: string) => {
     await api.delete(`/links/${id}`);
     setLinks(links.filter((l) => l.id !== id));
-    toast.success('Link deleted');
+    toast.success('Deleted');
   };
 
   const handleReorderLinks = async (linkIds: string[]) => {
@@ -151,14 +188,27 @@ export default function DashboardPage() {
     await api.put('/links/reorder', { linkIds });
   };
 
-  // Filter links by search
+  // Filter links by search (including macro_items)
   const filteredLinks = links.filter((link) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
-    return (
-      link.title.toLowerCase().includes(query) ||
-      link.url.toLowerCase().includes(query)
-    );
+
+    // Match title or url
+    if (link.title.toLowerCase().includes(query)) return true;
+    if (link.url.toLowerCase().includes(query)) return true;
+
+    // For macros, also search inside macro_items
+    if (link.type === 'macro' && link.macro_items) {
+      return link.macro_items.some(
+        (item) =>
+          (item.resolved_url && item.resolved_url.toLowerCase().includes(query)) ||
+          (item.resolved_title && item.resolved_title.toLowerCase().includes(query)) ||
+          (item.custom_url && item.custom_url.toLowerCase().includes(query)) ||
+          (item.custom_title && item.custom_title.toLowerCase().includes(query))
+      );
+    }
+
+    return false;
   });
 
   // Get category name for header
@@ -205,7 +255,7 @@ export default function DashboardPage() {
         <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-sm border-b border-border">
           <div className="px-6 py-4 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              {/* 모바일 햄버거 메뉴 */}
+              {/* Mobile hamburger */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -294,25 +344,49 @@ export default function DashboardPage() {
                 />
               </div>
 
-              {/* Add Link Button */}
-              <Button
-                onClick={() => {
-                  setEditingLink(null);
-                  setIsAddLinkOpen(true);
-                }}
-                className="h-10 bg-primary text-primary-foreground hover:bg-primary/90 gap-2 btn-press"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                <span className="hidden sm:inline">Add Link</span>
-              </Button>
+              {/* Add Dropdown (Link or Macro) */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="h-10 bg-primary text-primary-foreground hover:bg-primary/90 gap-2 btn-press">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    <span className="hidden sm:inline">Add</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setEditingLink(null);
+                      setIsAddLinkOpen(true);
+                    }}
+                    className="cursor-pointer gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                    </svg>
+                    Add Link
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setEditingMacro(null);
+                      setIsAddMacroOpen(true);
+                    }}
+                    className="cursor-pointer gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L12 12.75 6.429 9.75m11.142 0l4.179 2.25L12 17.25 2.25 12l4.179-2.25m11.142 0l4.179 2.25L12 22.5l-9.75-5.25 4.179-2.25" />
+                    </svg>
+                    Add Macro
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
@@ -369,6 +443,20 @@ export default function DashboardPage() {
         categories={categories}
         selectedCategoryId={selectedCategoryId}
         editingLink={editingLink}
+      />
+
+      {/* Add/Edit Macro Dialog */}
+      <AddMacroDialog
+        isOpen={isAddMacroOpen}
+        onClose={() => {
+          setIsAddMacroOpen(false);
+          setEditingMacro(null);
+        }}
+        onSubmit={handleAddMacro}
+        categories={categories}
+        selectedCategoryId={selectedCategoryId}
+        allLinks={links}
+        editingMacro={editingMacro}
       />
     </div>
   );

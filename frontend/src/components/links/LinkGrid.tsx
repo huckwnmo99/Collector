@@ -18,6 +18,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { LinkCard } from './LinkCard';
+import { MacroCard } from './MacroCard';
 import { Link, Category } from '@/types';
 
 interface LinkGridProps {
@@ -57,9 +58,11 @@ function SortableLinkCard({
     zIndex: isDragging ? 50 : 'auto',
   };
 
+  const CardComponent = link.type === 'macro' ? MacroCard : LinkCard;
+
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <LinkCard
+      <CardComponent
         link={link}
         onEdit={onEdit}
         onDelete={onDelete}

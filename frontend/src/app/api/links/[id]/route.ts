@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 
-// PUT /api/links/[id] - Update a link
+// PUT /api/links/[id] - Update a link or macro
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -15,12 +15,12 @@ export async function PUT(
     }
 
     const { id } = await params;
-    const { title, url, categoryId, memo, showFavicon } = await request.json();
+    const { title, url, categoryId, memo, showFavicon, macroItems } = await request.json();
 
     // Verify ownership
     const { data: existingLink } = await supabaseAdmin
       .from('links')
-      .select('id')
+      .select('id, type')
       .eq('id', id)
       .eq('user_id', authUser.userId)
       .single();
@@ -58,6 +58,85 @@ export async function PUT(
     if (error) {
       console.error('Error updating link:', error);
       return NextResponse.json({ error: 'Failed to update link' }, { status: 500 });
+    }
+
+    // Handle macro items update (delete & reinsert)
+    if (macroItems !== undefined && existingLink.type === 'macro') {
+      // Delete existing items
+      await supabaseAdmin
+        .from('macro_items')
+        .delete()
+        .eq('macro_id', id);
+
+      // Insert new items
+      if (macroItems.length > 0) {
+        const itemsToInsert = macroItems.map((item: { link_id?: string; custom_url?: string; custom_title?: string; order_index: number }) => {
+          let customFavicon = null;
+          if (item.custom_url) {
+            try {
+              const urlObj = new URL(item.custom_url);
+              customFavicon = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=128`;
+            } catch {
+              // Invalid URL
+            }
+          }
+          return {
+            macro_id: id,
+            link_id: item.link_id || null,
+            custom_url: item.custom_url || null,
+            custom_title: item.custom_title || null,
+            custom_favicon: customFavicon,
+            order_index: item.order_index,
+          };
+        });
+
+        const { data: insertedItems, error: itemsError } = await supabaseAdmin
+          .from('macro_items')
+          .insert(itemsToInsert)
+          .select('*');
+
+        if (itemsError) {
+          console.error('Error updating macro items:', itemsError);
+        }
+
+        // Resolve items for response
+        const linkedIds = (insertedItems || [])
+          .filter((i: { link_id: string | null }) => i.link_id)
+          .map((i: { link_id: string }) => i.link_id);
+
+        let linkedMap: Record<string, { url: string; title: string; favicon: string | null }> = {};
+        if (linkedIds.length > 0) {
+          const { data: linkedLinks } = await supabaseAdmin
+            .from('links')
+            .select('id, url, title, favicon')
+            .in('id', linkedIds);
+          if (linkedLinks) {
+            linkedMap = Object.fromEntries(
+              linkedLinks.map((l: { id: string; url: string; title: string; favicon: string | null }) => [l.id, l])
+            );
+          }
+        }
+
+        const resolvedItems = (insertedItems || []).map((item: {
+          link_id: string | null;
+          custom_url: string | null;
+          custom_title: string | null;
+          custom_favicon: string | null;
+          [key: string]: unknown;
+        }) => {
+          const linked = item.link_id ? linkedMap[item.link_id as string] : null;
+          return {
+            ...item,
+            resolved_url: linked?.url || item.custom_url,
+            resolved_title: linked?.title || item.custom_title,
+            resolved_favicon: linked?.favicon || item.custom_favicon,
+          };
+        });
+
+        return NextResponse.json({ link: { ...link, macro_items: resolvedItems } });
+      }
+
+      return NextResponse.json({ link: { ...link, macro_items: [] } });
     }
 
     return NextResponse.json({ link });
