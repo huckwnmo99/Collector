@@ -10,7 +10,7 @@
     "lint": "eslint",
     "electron:build-ts": "tsc -p electron/tsconfig.json",
     "electron:dev": "concurrently --kill-others \"npm run dev\" \"wait-on http://localhost:3000 && cross-env ELECTRON_DEV_URL=http://localhost:3000 electron .\"",
-    "electron:prebuild": "npm run build && node scripts/prepare-standalone.js && npm run electron:build-ts",
+    "electron:prebuild": "cross-env BUILD_TARGET=electron npm run build && node scripts/prepare-standalone.js && npm run electron:build-ts",
     "electron:start": "cross-env IS_ELECTRON=true electron .",
     "electron:build": "npm run electron:prebuild && electron-builder --win --config electron-builder.yml"
   },

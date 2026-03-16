@@ -33,9 +33,11 @@ export async function getAuthUser(): Promise<JwtPayload | null> {
 
 export function createAuthCookie(token: string): string {
   const maxAge = 7 * 24 * 60 * 60; // 7 days
-  return `auth_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`;
+  const secure = process.env.NODE_ENV === 'production' && !process.env.IS_ELECTRON;
+  return `auth_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure ? '; Secure' : ''}`;
 }
 
 export function createLogoutCookie(): string {
-  return 'auth_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0';
+  const secure = process.env.NODE_ENV === 'production' && !process.env.IS_ELECTRON;
+  return `auth_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure ? '; Secure' : ''}`;
 }

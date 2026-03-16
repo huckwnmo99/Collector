@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { PWAProvider } from "@/components/providers/PWAProvider";
 import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({
@@ -13,11 +14,20 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Web Collector",
   description: "Your personal bookmark manager",
+  manifest: "/manifest.json",
   icons: {
     icon: [
-      { url: "/icon.png", sizes: "1280x1280", type: "image/png" },
+      { url: "/icon.png", sizes: "256x256", type: "image/png" },
     ],
-    apple: "/icon.png",
+    apple: "/icon-192x192.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Web Collector",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
   },
 };
 
@@ -28,8 +38,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="theme-color" content="#0a0a0a" />
+      </head>
       <body className={`${inter.variable} antialiased`}>
         <ThemeProvider>
+          <PWAProvider />
           {children}
           <Toaster position="bottom-right" />
         </ThemeProvider>
