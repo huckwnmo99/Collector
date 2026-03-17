@@ -27,6 +27,11 @@ win:
         - x64
   icon: resources/icon.ico
 
+publish:
+  provider: github
+  owner: huckwnmo99
+  repo: Collector_program_update
+
 nsis:
   oneClick: true
   perMachine: false

@@ -232,7 +232,7 @@ export default function WidgetPage() {
 
   const handleLinkClick = (url: string) => {
     const isLocalPath = /^[A-Za-z]:\\/.test(url) || url.startsWith('\\\\');
-    if (isLocalPath && window.electronAPI) {
+    if (isLocalPath && window.electronAPI?.openPath) {
       window.electronAPI.openPath(url);
     } else {
       window.open(url, '_blank');
@@ -266,7 +266,7 @@ export default function WidgetPage() {
     if (window.electronAPI?.closeWidgetSelf) {
       window.electronAPI.closeWidgetSelf();
     } else {
-      window.electronAPI?.sendToggleWidget();
+      window.electronAPI?.sendToggleWidget?.();
     }
   };
 
@@ -276,7 +276,7 @@ export default function WidgetPage() {
   };
 
   const handleRemoveCategory = (categoryId: string) => {
-    window.electronAPI?.removeCategory(categoryId);
+    window.electronAPI?.removeCategory?.(categoryId);
     setCategories((prev) => {
       const updated = prev.filter((c) => c.categoryId !== categoryId);
       // If we removed the active category, switch to first remaining
@@ -288,7 +288,7 @@ export default function WidgetPage() {
         if (window.electronAPI?.closeWidgetSelf) {
           window.electronAPI.closeWidgetSelf();
         } else {
-          window.electronAPI?.sendToggleWidget();
+          window.electronAPI?.sendToggleWidget?.();
         }
       }
       if (updated.length <= 1) {
@@ -313,7 +313,7 @@ export default function WidgetPage() {
     const handleMouseLeave = () => {
       // Mouse left the widget window → detach this category
       if (cat) {
-        window.electronAPI?.detachCategory({
+        window.electronAPI?.detachCategory?.({
           categoryId: cat.categoryId,
           categoryName: cat.categoryName,
           categoryColor: cat.categoryColor,

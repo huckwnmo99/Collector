@@ -1,9 +1,33 @@
 import { ChildProcess, fork } from 'child_process';
 import path from 'path';
+import fs from 'fs';
 import http from 'http';
 import net from 'net';
 
 let serverProcess: ChildProcess | null = null;
+
+/**
+ * Find server.js recursively in the standalone directory.
+ * Next.js standalone preserves the full project path structure,
+ * so server.js may be deeply nested.
+ */
+function findServerJs(dir: string): string | null {
+  const candidate = path.join(dir, 'server.js');
+  if (fs.existsSync(candidate)) return candidate;
+
+  try {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isDirectory() && entry.name !== 'node_modules' && entry.name !== '.next') {
+        const found = findServerJs(path.join(dir, entry.name));
+        if (found) return found;
+      }
+    }
+  } catch {
+    // ignore read errors
+  }
+  return null;
+}
 
 function findAvailablePort(startPort: number): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -52,10 +76,23 @@ export async function startNextServer(): Promise<number> {
   const port = await findAvailablePort(3000);
 
   const standaloneDir = path.join(process.resourcesPath, 'standalone');
-  const serverPath = path.join(standaloneDir, 'server.js');
+
+  // Find server.js (may be nested due to Next.js standalone path preservation)
+  let serverPath = path.join(standaloneDir, 'server.js');
+  if (!fs.existsSync(serverPath)) {
+    const found = findServerJs(standaloneDir);
+    if (found) {
+      serverPath = found;
+    } else {
+      throw new Error(`server.js not found in ${standaloneDir}`);
+    }
+  }
+
+  const serverCwd = path.dirname(serverPath);
 
   console.log(`Starting Next.js server on port ${port}...`);
   console.log(`Server path: ${serverPath}`);
+  console.log(`Server cwd: ${serverCwd}`);
 
   serverProcess = fork(serverPath, [], {
     env: {
@@ -65,7 +102,7 @@ export async function startNextServer(): Promise<number> {
       NODE_ENV: 'production',
       IS_ELECTRON: 'true',
     },
-    cwd: standaloneDir,
+    cwd: serverCwd,
     stdio: 'pipe',
   });
 

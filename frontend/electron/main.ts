@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, Menu } from 'electron';
 import path from 'path';
 import { startNextServer, stopNextServer } from './next-server';
 import { createTray, destroyTray } from './tray';
@@ -26,6 +26,7 @@ if (!gotTheLock) {
   });
 
   app.whenReady().then(async () => {
+    Menu.setApplicationMenu(null);
     await createWindow();
   });
 }
