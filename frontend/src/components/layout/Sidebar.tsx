@@ -41,6 +41,7 @@ interface SidebarProps {
   categories: Category[];
   selectedCategoryId: string | null;
   onSelectCategory: (id: string | null) => void;
+  onOpenWidget?: (category: Category) => void;
   onCreateCategory: (name: string, color: string) => Promise<void>;
   onUpdateCategory: (id: string, name: string, color: string) => Promise<void>;
   onDeleteCategory: (id: string) => Promise<void>;
@@ -74,11 +75,12 @@ interface SortableCategoryProps {
   isSelected: boolean;
   isCollapsed: boolean;
   onSelect: () => void;
+  onOpenWidget?: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-function SortableCategory({ category, isSelected, isCollapsed, onSelect, onEdit, onDelete }: SortableCategoryProps) {
+function SortableCategory({ category, isSelected, isCollapsed, onSelect, onOpenWidget, onEdit, onDelete }: SortableCategoryProps) {
   const {
     attributes,
     listeners,
@@ -130,6 +132,18 @@ function SortableCategory({ category, isSelected, isCollapsed, onSelect, onEdit,
       </Button>
       {!isCollapsed && (
         <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+          {onOpenWidget && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onOpenWidget(); }}
+              className="p-1 hover:text-primary"
+              title="Open widget"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <rect x="3.75" y="4.75" width="16.5" height="12.5" rx="2.25" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 20.25h8M10 17.25v3M14 17.25v3" />
+              </svg>
+            </button>
+          )}
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(); }}
             className="p-1 hover:text-primary"
@@ -156,6 +170,7 @@ export function Sidebar({
   categories,
   selectedCategoryId,
   onSelectCategory,
+  onOpenWidget,
   onCreateCategory,
   onUpdateCategory,
   onDeleteCategory,
@@ -454,6 +469,7 @@ export function Sidebar({
                       isSelected={selectedCategoryId === category.id}
                       isCollapsed={isCollapsed}
                       onSelect={() => handleSelectCategory(category.id)}
+                      onOpenWidget={onOpenWidget ? () => onOpenWidget(category) : undefined}
                       onEdit={() => handleEditCategory(category)}
                       onDelete={() => onDeleteCategory(category.id)}
                     />

@@ -63,6 +63,34 @@ const themes = {
   },
 };
 
+function isLocalFilePath(url: string) {
+  return (
+    /^[A-Za-z]:\\/.test(url) ||
+    url.startsWith('\\\\') ||
+    url.startsWith('/') ||
+    url.startsWith('~/') ||
+    url.startsWith('file://')
+  );
+}
+
+function toOpenableLocalPath(url: string) {
+  if (!url.startsWith('file://')) {
+    return url;
+  }
+
+  try {
+    const parsed = new URL(url);
+    const decodedPath = decodeURIComponent(parsed.pathname);
+    if (window.electronAPI?.platform === 'win32' && /^\/[A-Za-z]:/.test(decodedPath)) {
+      return decodedPath.slice(1).replace(/\//g, '\\');
+    }
+
+    return decodedPath;
+  } catch {
+    return url;
+  }
+}
+
 export default function WidgetPage() {
   const [categories, setCategories] = useState<CategoryData[]>([]);
   const [activeCategory, setActiveCategory] = useState<CategoryData | null>(null);
@@ -76,6 +104,32 @@ export default function WidgetPage() {
   const [mergeSlideColor, setMergeSlideColor] = useState<string | null>(null);
   const [draggingCategory, setDraggingCategory] = useState<CategoryData | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const categoryId = params.get('categoryId');
+    const categoryName = params.get('categoryName');
+
+    if (!categoryId || !categoryName) {
+      return;
+    }
+
+    const initialCategory = {
+      categoryId,
+      categoryName,
+      categoryColor: params.get('categoryColor') || '#007AFF',
+    };
+
+    setCategories((prev) => {
+      if (prev.some((category) => category.categoryId === initialCategory.categoryId)) {
+        return prev;
+      }
+
+      return [initialCategory, ...prev];
+    });
+
+    setActiveCategory((prev) => prev || initialCategory);
+  }, []);
 
   // Load saved opacity
   useEffect(() => {
@@ -231,9 +285,8 @@ export default function WidgetPage() {
   }, [activeCategory]);
 
   const handleLinkClick = (url: string) => {
-    const isLocalPath = /^[A-Za-z]:\\/.test(url) || url.startsWith('\\\\');
-    if (isLocalPath && window.electronAPI?.openPath) {
-      window.electronAPI.openPath(url);
+    if (isLocalFilePath(url) && window.electronAPI?.openPath) {
+      window.electronAPI.openPath(toOpenableLocalPath(url));
     } else {
       window.open(url, '_blank');
     }
@@ -873,7 +926,7 @@ export default function WidgetPage() {
                   }}
                 >
                   {/* Favicon */}
-                  {/^[A-Za-z]:\\/.test(link.url) || link.url.startsWith('\\\\') ? (
+                  {isLocalFilePath(link.url) ? (
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="#fbbf24" style={{ flexShrink: 0 }}>
                       <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
                     </svg>

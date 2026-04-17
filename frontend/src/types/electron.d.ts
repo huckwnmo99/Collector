@@ -1,13 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+interface WidgetCategoryData {
+  categoryId: string;
+  categoryName: string;
+  categoryColor: string;
+}
+
 interface ElectronAPI {
   platform: string;
   version: string;
   openUrls?: (urls: string[]) => Promise<void>;
   openPath?: (path: string) => void;
+  openWidget?: (category: WidgetCategoryData) => Promise<void>;
   sendToggleWidget?: () => void;
   closeWidgetSelf?: () => void;
   removeCategory?: (categoryId: string) => void;
-  detachCategory?: (data: { categoryId: string; categoryName: string; categoryColor: string }) => void;
+  detachCategory?: (data: WidgetCategoryData) => void;
   onSetCategory: (callback: (...args: any[]) => void) => void;
   onAddCategories: (callback: (...args: any[]) => void) => void;
   onSwitchCategory: (callback: (...args: any[]) => void) => void;

@@ -36,6 +36,7 @@ export default function DashboardPage() {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isElectron, setIsElectron] = useState(false);
 
   // Load view mode from localStorage
   useEffect(() => {
@@ -43,6 +44,10 @@ export default function DashboardPage() {
     if (savedViewMode) {
       setViewMode(savedViewMode);
     }
+  }, []);
+
+  useEffect(() => {
+    setIsElectron(Boolean(window.electronAPI?.openWidget));
   }, []);
 
   // Save view mode to localStorage
@@ -177,6 +182,30 @@ export default function DashboardPage() {
     toast.success('Deleted');
   };
 
+  const handleOpenWidget = async (category?: Category) => {
+    const targetCategory = category || selectedCategory;
+
+    if (!targetCategory || !window.electronAPI?.openWidget) {
+      console.warn('Widget API unavailable or no category selected', {
+        hasApi: Boolean(window.electronAPI?.openWidget),
+        selectedCategoryId: targetCategory?.id || selectedCategoryId,
+      });
+      return;
+    }
+
+    try {
+      console.log('Opening widget for category', targetCategory);
+      await window.electronAPI.openWidget({
+        categoryId: targetCategory.id,
+        categoryName: targetCategory.name,
+        categoryColor: targetCategory.color,
+      });
+    } catch (error) {
+      console.error('Failed to open widget:', error);
+      toast.error('Failed to open widget');
+    }
+  };
+
   const handleReorderLinks = async (linkIds: string[]) => {
     // Optimistic update
     const reorderedLinks = linkIds.map((id) => {
@@ -236,6 +265,7 @@ export default function DashboardPage() {
         categories={categories}
         selectedCategoryId={selectedCategoryId}
         onSelectCategory={setSelectedCategoryId}
+        onOpenWidget={isElectron ? handleOpenWidget : undefined}
         onCreateCategory={handleCreateCategory}
         onUpdateCategory={handleUpdateCategory}
         onDeleteCategory={handleDeleteCategory}
