@@ -1,4 +1,5 @@
 import { app, BrowserWindow, shell, ipcMain, Menu, screen } from 'electron';
+import { autoUpdater } from 'electron-updater';
 import path from 'path';
 import fs from 'fs';
 import { startNextServer, stopNextServer } from './next-server';
@@ -34,6 +35,23 @@ interface WidgetLayoutFile {
   widgets: WidgetLayoutEntry[];
 }
 
+type UpdateStatus =
+  | 'checking'
+  | 'available'
+  | 'not-available'
+  | 'downloading'
+  | 'downloaded'
+  | 'error'
+  | 'unsupported';
+
+interface UpdateStatusPayload {
+  status: UpdateStatus;
+  message: string;
+  currentVersion: string;
+  version?: string;
+  percent?: number;
+}
+
 let mainWindow: BrowserWindow | null = null;
 let appBaseUrl: string | null = null;
 let nextServerPort: number | null = null;
@@ -44,6 +62,9 @@ const useSingleInstanceLock = app.isPackaged;
 const WIDGET_WIDTH = 340;
 const WIDGET_HEIGHT = 560;
 let widgetLayoutSaveTimer: NodeJS.Timeout | null = null;
+let updateDownloaded = false;
+let updateDownloadedVersion: string | undefined;
+let isQuitting = false;
 
 // High-DPI support for Windows
 app.commandLine.appendSwitch('high-dpi-support', '1');
@@ -51,6 +72,154 @@ app.commandLine.appendSwitch('force-device-scale-factor', '1');
 
 function isExternalUrl(url: string) {
   return url.startsWith('http://') || url.startsWith('https://');
+}
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return String(error);
+}
+
+function sendUpdateStatus(payload: UpdateStatusPayload) {
+  for (const window of BrowserWindow.getAllWindows()) {
+    if (!window.isDestroyed()) {
+      window.webContents.send('app:update-status', payload);
+    }
+  }
+}
+
+function makeUpdatePayload(
+  status: UpdateStatus,
+  message: string,
+  options: Omit<Partial<UpdateStatusPayload>, 'status' | 'message' | 'currentVersion'> = {}
+): UpdateStatusPayload {
+  return {
+    status,
+    message,
+    currentVersion: app.getVersion(),
+    ...options,
+  };
+}
+
+function configureAutoUpdater() {
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('checking-for-update', () => {
+    sendUpdateStatus(makeUpdatePayload('checking', 'Checking for updates.'));
+  });
+
+  autoUpdater.on('update-available', (info) => {
+    updateDownloaded = false;
+    updateDownloadedVersion = info.version;
+    sendUpdateStatus(
+      makeUpdatePayload('available', `Version ${info.version} is available.`, {
+        version: info.version,
+      })
+    );
+  });
+
+  autoUpdater.on('update-not-available', (info) => {
+    sendUpdateStatus(
+      makeUpdatePayload('not-available', 'You are using the latest version.', {
+        version: info.version,
+      })
+    );
+  });
+
+  autoUpdater.on('download-progress', (progress) => {
+    const percent = Math.round(progress.percent);
+    sendUpdateStatus(
+      makeUpdatePayload('downloading', `Downloading update. ${percent}%`, {
+        version: updateDownloadedVersion,
+        percent,
+      })
+    );
+  });
+
+  autoUpdater.on('update-downloaded', (info) => {
+    updateDownloaded = true;
+    updateDownloadedVersion = info.version;
+    sendUpdateStatus(
+      makeUpdatePayload('downloaded', `Version ${info.version} has been downloaded.`, {
+        version: info.version,
+        percent: 100,
+      })
+    );
+  });
+
+  autoUpdater.on('error', (error) => {
+    sendUpdateStatus(
+      makeUpdatePayload('error', `Update check failed: ${getErrorMessage(error)}`)
+    );
+  });
+}
+
+async function checkForAppUpdates(): Promise<UpdateStatusPayload> {
+  if (!app.isPackaged) {
+    return makeUpdatePayload('unsupported', 'Updates are available only in the installed desktop app.');
+  }
+
+  try {
+    updateDownloaded = false;
+    updateDownloadedVersion = undefined;
+    const result = await autoUpdater.checkForUpdates();
+    const version = result?.updateInfo?.version;
+
+    if (version && version !== app.getVersion()) {
+      return makeUpdatePayload('available', `Version ${version} is available.`, {
+        version,
+      });
+    }
+
+    return makeUpdatePayload('not-available', 'You are using the latest version.', {
+      version,
+    });
+  } catch (error) {
+    return makeUpdatePayload('error', `Update check failed: ${getErrorMessage(error)}`);
+  }
+}
+
+async function downloadAppUpdate(): Promise<UpdateStatusPayload> {
+  if (!app.isPackaged) {
+    return makeUpdatePayload('unsupported', 'Updates are available only in the installed desktop app.');
+  }
+
+  try {
+    await autoUpdater.downloadUpdate();
+    return makeUpdatePayload(
+      updateDownloaded ? 'downloaded' : 'downloading',
+      updateDownloaded
+        ? `Version ${updateDownloadedVersion} has been downloaded.`
+        : 'Downloading update.',
+      {
+        version: updateDownloadedVersion,
+        percent: updateDownloaded ? 100 : undefined,
+      }
+    );
+  } catch (error) {
+    return makeUpdatePayload('error', `Update download failed: ${getErrorMessage(error)}`);
+  }
+}
+
+function installAppUpdate(): UpdateStatusPayload {
+  if (!app.isPackaged) {
+    return makeUpdatePayload('unsupported', 'Updates are available only in the installed desktop app.');
+  }
+
+  if (!updateDownloaded) {
+    return makeUpdatePayload('error', 'Download the update first.', {
+      version: updateDownloadedVersion,
+    });
+  }
+
+  autoUpdater.quitAndInstall(false, true);
+  return makeUpdatePayload('downloaded', 'Restarting to install the update.', {
+    version: updateDownloadedVersion,
+    percent: 100,
+  });
 }
 
 function normalizeOpenPath(targetPath: string) {
@@ -399,7 +568,7 @@ async function createWidgetWindow(
   widgetWindow.on('closed', () => {
     console.log('[widget] closed', widgetWindow.id);
     widgetStates.delete(widgetWindow.id);
-    if (!(app as any).isQuitting) {
+    if (!isQuitting) {
       scheduleWidgetLayoutSave();
     }
   });
@@ -472,6 +641,7 @@ if (!gotTheLock) {
 
   app.whenReady().then(async () => {
     Menu.setApplicationMenu(null);
+    configureAutoUpdater();
     await createWindow();
     if (app.isPackaged) {
       await restoreWidgetWindows();
@@ -506,7 +676,7 @@ async function createWindow() {
 
   // Hide to tray instead of closing
   mainWindow.on('close', (event) => {
-    if (app.isPackaged && !(app as any).isQuitting) {
+    if (app.isPackaged && !isQuitting) {
       event.preventDefault();
       mainWindow?.hide();
     }
@@ -526,6 +696,14 @@ async function createWindow() {
       }
     }
   });
+
+  ipcMain.handle('app:get-version', () => app.getVersion());
+
+  ipcMain.handle('app:check-for-updates', async () => checkForAppUpdates());
+
+  ipcMain.handle('app:download-update', async () => downloadAppUpdate());
+
+  ipcMain.handle('app:install-update', () => installAppUpdate());
 
   ipcMain.handle('open-widget', async (_event, category: WidgetCategoryData) => {
     await openWidget(category);
@@ -600,7 +778,7 @@ app.on('window-all-closed', () => {
 });
 
 app.on('before-quit', () => {
-  (app as any).isQuitting = true;
+  isQuitting = true;
   closeAllWidgetWindows();
   if (app.isPackaged) {
     destroyTray();

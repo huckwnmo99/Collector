@@ -2,6 +2,7 @@
 
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
+import { Download, RefreshCw, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -20,17 +21,46 @@ const themes = [
   { id: 'theme-dashboard', name: 'Dashboard', description: 'Dark professional' },
 ];
 
+const idleUpdateStatus: UpdateStatusPayload = {
+  status: 'idle',
+  message: 'Check for updates.',
+  currentVersion: '',
+};
+
 export function OptionsDialog() {
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [currentThemeStyle, setCurrentThemeStyle] = useState('theme-macos');
   const [isOpen, setIsOpen] = useState(false);
+  const [appVersion, setAppVersion] = useState('');
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatusPayload>(idleUpdateStatus);
 
   useEffect(() => {
-    setMounted(true);
     // Load saved theme style
     const savedTheme = localStorage.getItem('theme-style') || 'theme-macos';
-    setCurrentThemeStyle(savedTheme);
+    queueMicrotask(() => {
+      setMounted(true);
+      setCurrentThemeStyle(savedTheme);
+    });
+
+    const electronAPI = window.electronAPI;
+    electronAPI?.getAppVersion?.()
+      .then((version) => {
+        setAppVersion(version);
+        setUpdateStatus((prev) => ({ ...prev, currentVersion: version }));
+      })
+      .catch(() => undefined);
+
+    electronAPI?.onUpdateStatus?.((payload) => {
+      setUpdateStatus(payload);
+      if (payload.currentVersion) {
+        setAppVersion(payload.currentVersion);
+      }
+    });
+
+    return () => {
+      electronAPI?.removeUpdateStatusListener?.();
+    };
   }, []);
 
   const handleThemeStyleChange = (themeId: string) => {
@@ -47,9 +77,66 @@ export function OptionsDialog() {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
   };
 
+  const handleUpdateAction = async () => {
+    const electronAPI = window.electronAPI;
+
+    if (!electronAPI?.checkForUpdates) {
+      setUpdateStatus({
+        status: 'unsupported',
+        message: 'Updates are available only in the desktop app.',
+        currentVersion: appVersion,
+      });
+      return;
+    }
+
+    if (updateStatus.status === 'downloaded' && electronAPI.installUpdate) {
+      const result = await electronAPI.installUpdate();
+      setUpdateStatus(result);
+      return;
+    }
+
+    if (updateStatus.status === 'available' && electronAPI.downloadUpdate) {
+      setUpdateStatus({
+        ...updateStatus,
+        status: 'downloading',
+        message: 'Downloading update.',
+      });
+      const result = await electronAPI.downloadUpdate();
+      setUpdateStatus(result);
+      return;
+    }
+
+    setUpdateStatus({
+      status: 'checking',
+      message: 'Checking for updates.',
+      currentVersion: appVersion,
+    });
+    const result = await electronAPI.checkForUpdates();
+    setUpdateStatus(result);
+  };
+
   if (!mounted) return null;
 
   const isDark = resolvedTheme === 'dark';
+  const isUpdateBusy = updateStatus.status === 'checking' || updateStatus.status === 'downloading';
+  const updateButtonLabel =
+    updateStatus.status === 'available'
+      ? 'Download'
+      : updateStatus.status === 'downloaded'
+        ? 'Restart to install'
+        : updateStatus.status === 'checking'
+          ? 'Checking'
+          : updateStatus.status === 'downloading'
+            ? `${updateStatus.percent ?? 0}%`
+            : 'Check Update';
+  const updateButtonIcon =
+    updateStatus.status === 'available' || updateStatus.status === 'downloading' ? (
+      <Download className={updateStatus.status === 'downloading' ? 'animate-pulse' : ''} />
+    ) : updateStatus.status === 'downloaded' ? (
+      <RotateCcw />
+    ) : (
+      <RefreshCw className={updateStatus.status === 'checking' ? 'animate-spin' : ''} />
+    );
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -124,6 +211,45 @@ export function OptionsDialog() {
                   <div className="text-xs text-muted-foreground">{t.description}</div>
                 </button>
               ))}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Updates */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Application</Label>
+            <div className="space-y-3 p-3 rounded-lg bg-muted/50">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 space-y-1">
+                  <div className="text-sm font-medium">Updates</div>
+                  <div className="text-xs text-muted-foreground break-words">
+                    {updateStatus.message}
+                  </div>
+                  {appVersion && (
+                    <div className="text-xs text-muted-foreground/80">Current v{appVersion}</div>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={updateStatus.status === 'downloaded' ? 'default' : 'outline'}
+                  onClick={handleUpdateAction}
+                  disabled={isUpdateBusy}
+                  className="min-w-[116px]"
+                >
+                  {updateButtonIcon}
+                  {updateButtonLabel}
+                </Button>
+              </div>
+              {updateStatus.status === 'downloading' && (
+                <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all duration-300"
+                    style={{ width: `${Math.min(updateStatus.percent ?? 0, 100)}%` }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
