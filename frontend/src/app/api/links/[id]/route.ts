@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
+import { normalizeFallbackFaviconDataUrl } from '@/lib/fallbackFavicons';
 
 // PUT /api/links/[id] - Update a link or macro
 export async function PUT(
@@ -15,7 +16,16 @@ export async function PUT(
     }
 
     const { id } = await params;
-    const { title, url, categoryId, memo, showFavicon, macroItems } = await request.json();
+    const {
+      title,
+      url,
+      categoryId,
+      memo,
+      showFavicon,
+      favicon: selectedFavicon,
+      macroItems,
+    } = await request.json();
+    const normalizedSelectedFavicon = normalizeFallbackFaviconDataUrl(selectedFavicon);
 
     // Verify ownership
     const { data: existingLink } = await supabaseAdmin
@@ -47,6 +57,7 @@ export async function PUT(
     if (categoryId !== undefined) updateData.category_id = categoryId || null;
     if (memo !== undefined) updateData.memo = memo === '' ? null : memo;
     if (showFavicon !== undefined) updateData.show_favicon = showFavicon;
+    if (selectedFavicon !== undefined) updateData.favicon = normalizedSelectedFavicon || null;
 
     const { data: link, error } = await supabaseAdmin
       .from('links')

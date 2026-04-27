@@ -11,11 +11,24 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Category, Link } from '@/types';
+import {
+  DEFAULT_FALLBACK_FAVICON_ID,
+  fallbackFavicons,
+  getFallbackFaviconDataUrl,
+  getFallbackFaviconIdFromDataUrl,
+} from '@/lib/fallbackFavicons';
 
 interface AddLinkDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (title: string, url: string, categoryId?: string, memo?: string, showFavicon?: boolean) => Promise<void>;
+  onSubmit: (
+    title: string,
+    url: string,
+    categoryId?: string,
+    memo?: string,
+    showFavicon?: boolean,
+    favicon?: string
+  ) => Promise<void>;
   categories: Category[];
   selectedCategoryId: string | null;
   editingLink?: Link | null;
@@ -36,16 +49,19 @@ export function AddLinkDialog({
     categoryId: selectedCategoryId || '',
     memo: '',
     showFavicon: true,
+    faviconChoice: 'auto',
   });
 
   useEffect(() => {
     if (editingLink) {
+      const fallbackId = getFallbackFaviconIdFromDataUrl(editingLink.favicon);
       setFormData({
         title: editingLink.title,
         url: editingLink.url,
         categoryId: editingLink.category_id || '',
         memo: editingLink.memo || '',
         showFavicon: editingLink.show_favicon !== false,
+        faviconChoice: fallbackId || 'auto',
       });
     } else {
       setFormData({
@@ -54,6 +70,7 @@ export function AddLinkDialog({
         categoryId: selectedCategoryId || '',
         memo: '',
         showFavicon: true,
+        faviconChoice: 'auto',
       });
     }
   }, [editingLink, selectedCategoryId, isOpen]);
@@ -75,8 +92,27 @@ export function AddLinkDialog({
         }
       }
 
-      await onSubmit(title, formData.url, formData.categoryId || undefined, formData.memo, formData.showFavicon);
-      setFormData({ title: '', url: '', categoryId: selectedCategoryId || '', memo: '', showFavicon: true });
+      const favicon =
+        formData.faviconChoice === 'auto'
+          ? undefined
+          : getFallbackFaviconDataUrl(formData.faviconChoice);
+
+      await onSubmit(
+        title,
+        formData.url,
+        formData.categoryId || undefined,
+        formData.memo,
+        formData.showFavicon,
+        favicon
+      );
+      setFormData({
+        title: '',
+        url: '',
+        categoryId: selectedCategoryId || '',
+        memo: '',
+        showFavicon: true,
+        faviconChoice: 'auto',
+      });
       onClose();
     } catch (error) {
       console.error('Failed to add link:', error);
@@ -150,6 +186,50 @@ export function AddLinkDialog({
               className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
               rows={3}
             />
+          </div>
+
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Favicon</Label>
+            <div className="grid grid-cols-5 gap-2">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, faviconChoice: 'auto' })}
+                className={`
+                  h-12 rounded-lg border text-xs font-medium transition-all
+                  ${formData.faviconChoice === 'auto'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-muted/30 text-muted-foreground hover:bg-muted'
+                  }
+                `}
+                title="Use site favicon"
+              >
+                Auto
+              </button>
+              {fallbackFavicons.map((favicon) => {
+                const isSelected = formData.faviconChoice === favicon.id;
+                return (
+                  <button
+                    key={favicon.id}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, faviconChoice: favicon.id })}
+                    className={`
+                      h-12 rounded-lg border flex items-center justify-center transition-all
+                      ${isSelected
+                        ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                        : 'border-border bg-muted/30 hover:bg-muted'
+                      }
+                    `}
+                    title={favicon.id === DEFAULT_FALLBACK_FAVICON_ID ? `${favicon.name} (default)` : favicon.name}
+                  >
+                    <img
+                      src={getFallbackFaviconDataUrl(favicon.id)}
+                      alt=""
+                      className="w-8 h-8 rounded-md"
+                    />
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div

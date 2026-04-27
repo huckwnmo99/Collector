@@ -75,7 +75,15 @@ export interface LinkState {
   isLoading: boolean;
   fetchLinks: (categoryId?: string) => Promise<void>;
   createLink: (title: string, url: string, categoryId?: string) => Promise<void>;
-  updateLink: (id: string, title: string, url: string, categoryId?: string, memo?: string, showFavicon?: boolean) => Promise<void>;
+  updateLink: (
+    id: string,
+    title: string,
+    url: string,
+    categoryId?: string,
+    memo?: string,
+    showFavicon?: boolean,
+    favicon?: string
+  ) => Promise<void>;
   deleteLink: (id: string) => Promise<void>;
   reorderLinks: (linkIds: string[]) => Promise<void>;
 }

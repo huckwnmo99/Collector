@@ -130,14 +130,28 @@ export default function DashboardPage() {
   };
 
   // Link actions
-  const handleAddLink = async (title: string, url: string, categoryId?: string, memo?: string, showFavicon?: boolean) => {
+  const handleAddLink = async (
+    title: string,
+    url: string,
+    categoryId?: string,
+    memo?: string,
+    showFavicon?: boolean,
+    favicon?: string
+  ) => {
     if (editingLink) {
-      const response = await api.put(`/links/${editingLink.id}`, { title, url, categoryId, memo, showFavicon });
+      const response = await api.put(`/links/${editingLink.id}`, {
+        title,
+        url,
+        categoryId,
+        memo,
+        showFavicon,
+        favicon,
+      });
       setLinks(links.map((l) => (l.id === editingLink.id ? response.data.link : l)));
       setEditingLink(null);
       toast.success('Link updated!');
     } else {
-      const response = await api.post('/links', { title, url, categoryId, memo, showFavicon });
+      const response = await api.post('/links', { title, url, categoryId, memo, showFavicon, favicon });
       setLinks([response.data.link, ...links]);
       toast.success('Link added!');
     }

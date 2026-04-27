@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from '@/types';
 import api from '@/lib/api';
+import { getFallbackFaviconDataUrl } from '@/lib/fallbackFavicons';
 
 interface CategoryData {
   categoryId: string;
@@ -393,6 +394,7 @@ export default function WidgetPage() {
   const t = isDark ? themes.dark : themes.light;
   const accentColor = activeCategory?.categoryColor || '#007AFF';
   const hasMultipleCategories = categories.length > 1;
+  const fallbackFaviconUrl = getFallbackFaviconDataUrl();
 
   return (
     <div
@@ -942,7 +944,22 @@ export default function WidgetPage() {
                         objectFit: 'contain',
                       }}
                       onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
+                        const image = e.target as HTMLImageElement;
+                        if (image.src !== fallbackFaviconUrl) {
+                          image.src = fallbackFaviconUrl;
+                        }
+                      }}
+                    />
+                  ) : link.show_favicon ? (
+                    <img
+                      src={fallbackFaviconUrl}
+                      alt=""
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '5px',
+                        flexShrink: 0,
+                        objectFit: 'contain',
                       }}
                     />
                   ) : (

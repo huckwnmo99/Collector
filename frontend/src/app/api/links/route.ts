@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
+import { normalizeFallbackFaviconDataUrl } from '@/lib/fallbackFavicons';
 
 // GET /api/links - Get all links for user
 export async function GET(request: NextRequest) {
@@ -107,7 +108,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { title, url, categoryId, memo, showFavicon, type, macroItems } = await request.json();
+    const {
+      title,
+      url,
+      categoryId,
+      memo,
+      showFavicon,
+      favicon: selectedFavicon,
+      type,
+      macroItems,
+    } = await request.json();
+    const normalizedSelectedFavicon = normalizeFallbackFaviconDataUrl(selectedFavicon);
 
     // Macro creation
     if (type === 'macro') {
@@ -252,7 +263,7 @@ export async function POST(request: NextRequest) {
         category_id: categoryId || null,
         title,
         url,
-        favicon,
+        favicon: normalizedSelectedFavicon || favicon,
         show_favicon: showFavicon !== undefined ? showFavicon : true,
         memo: memo || null,
         order_index: newOrderIndex,

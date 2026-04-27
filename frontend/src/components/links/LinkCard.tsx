@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Link as LinkType } from '@/types';
+import { getFallbackFaviconDataUrl } from '@/lib/fallbackFavicons';
 
 interface LinkCardProps {
   link: LinkType;
@@ -30,6 +31,7 @@ export function LinkCard({ link, onEdit, onDelete }: LinkCardProps) {
 
   const showFavicon = link.show_favicon !== false;
   const faviconUrl = showFavicon ? (link.favicon || getFaviconUrl(link.url)) : null;
+  const fallbackFaviconUrl = getFallbackFaviconDataUrl();
 
   const handleClick = () => {
     window.open(link.url, '_blank', 'noopener,noreferrer');
@@ -92,6 +94,12 @@ export function LinkCard({ link, onEdit, onDelete }: LinkCardProps) {
             alt=""
             className="w-12 h-12 md:w-14 md:h-14 object-contain"
             onError={() => setImageError(true)}
+          />
+        ) : showFavicon ? (
+          <img
+            src={fallbackFaviconUrl}
+            alt=""
+            className="w-12 h-12 md:w-14 md:h-14 object-contain rounded-md"
           />
         ) : (
           <svg className="w-6 h-6 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
