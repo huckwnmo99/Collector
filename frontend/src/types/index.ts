@@ -10,6 +10,7 @@ export interface Category {
   user_id: string;
   name: string;
   color: string;
+  default_favicon_id: string | null;
   order_index: number;
   created_at: string;
   links?: Link[];
@@ -64,8 +65,8 @@ export interface CategoryState {
   categories: Category[];
   isLoading: boolean;
   fetchCategories: () => Promise<void>;
-  createCategory: (name: string, color: string) => Promise<void>;
-  updateCategory: (id: string, name: string, color: string) => Promise<void>;
+  createCategory: (name: string, color: string, defaultFaviconId?: string | null) => Promise<void>;
+  updateCategory: (id: string, name: string, color: string, defaultFaviconId?: string | null) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
   reorderCategories: (categoryIds: string[]) => Promise<void>;
 }

@@ -35,6 +35,11 @@ import { Label } from '@/components/ui/label';
 import { OptionsDialog } from './OptionsDialog';
 import { Category } from '@/types';
 import { useAuthStore } from '@/store/authStore';
+import {
+  DEFAULT_FALLBACK_FAVICON_ID,
+  fallbackFavicons,
+  getFallbackFaviconDataUrl,
+} from '@/lib/fallbackFavicons';
 import { toast } from 'sonner';
 
 interface SidebarProps {
@@ -42,8 +47,8 @@ interface SidebarProps {
   selectedCategoryId: string | null;
   onSelectCategory: (id: string | null) => void;
   onOpenWidget?: (category: Category) => void;
-  onCreateCategory: (name: string, color: string) => Promise<void>;
-  onUpdateCategory: (id: string, name: string, color: string) => Promise<void>;
+  onCreateCategory: (name: string, color: string, defaultFaviconId?: string | null) => Promise<void>;
+  onUpdateCategory: (id: string, name: string, color: string, defaultFaviconId?: string | null) => Promise<void>;
   onDeleteCategory: (id: string) => Promise<void>;
   onReorderCategories?: (categoryIds: string[]) => Promise<void>;
   isCollapsed: boolean;
@@ -166,6 +171,55 @@ function SortableCategory({ category, isSelected, isCollapsed, onSelect, onOpenW
   );
 }
 
+interface CategoryFaviconPickerProps {
+  value: string | null;
+  onChange: (value: string | null) => void;
+}
+
+function CategoryFaviconPicker({ value, onChange }: CategoryFaviconPickerProps) {
+  return (
+    <div className="space-y-2">
+      <Label className="text-sm font-medium">Default favicon</Label>
+      <div className="grid grid-cols-5 gap-2">
+        <button
+          type="button"
+          onClick={() => onChange(null)}
+          className={`
+            h-12 rounded-lg border text-[11px] font-medium transition-all
+            ${value === null
+              ? 'border-primary bg-primary/10 text-primary ring-2 ring-primary/20'
+              : 'border-border bg-muted/30 text-muted-foreground hover:bg-muted'
+            }
+          `}
+          title="Use global default"
+        >
+          Global
+        </button>
+        {fallbackFavicons.map((favicon) => {
+          const isSelected = value === favicon.id;
+          return (
+            <button
+              key={favicon.id}
+              type="button"
+              onClick={() => onChange(favicon.id)}
+              className={`
+                h-12 rounded-lg border flex items-center justify-center transition-all
+                ${isSelected
+                  ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                  : 'border-border bg-muted/30 hover:bg-muted'
+                }
+              `}
+              title={favicon.id === DEFAULT_FALLBACK_FAVICON_ID ? `${favicon.name} (global default)` : favicon.name}
+            >
+              <img src={getFallbackFaviconDataUrl(favicon.id)} alt="" className="w-8 h-8 rounded-md" />
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function Sidebar({
   categories,
   selectedCategoryId,
@@ -182,15 +236,24 @@ export function Sidebar({
   const { user, logout } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [newCategory, setNewCategory] = useState({ name: '', color: colorOptions[0] });
-  const [editCategory, setEditCategory] = useState<{ id: string; name: string; color: string } | null>(null);
+  const [newCategory, setNewCategory] = useState<{ name: string; color: string; defaultFaviconId: string | null }>({
+    name: '',
+    color: colorOptions[0],
+    defaultFaviconId: null,
+  });
+  const [editCategory, setEditCategory] = useState<{ id: string; name: string; color: string; defaultFaviconId: string | null } | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [customColor, setCustomColor] = useState('');
   const [newCustomColor, setNewCustomColor] = useState(colorOptions[0]);
 
   const handleEditCategory = (category: Category) => {
-    setEditCategory({ id: category.id, name: category.name, color: category.color });
+    setEditCategory({
+      id: category.id,
+      name: category.name,
+      color: category.color,
+      defaultFaviconId: category.default_favicon_id || null,
+    });
     setCustomColor(category.color);
     setIsEditOpen(true);
   };
@@ -203,11 +266,16 @@ export function Sidebar({
 
     setIsUpdating(true);
     try {
-      await onUpdateCategory(editCategory.id, editCategory.name, editCategory.color);
+      await onUpdateCategory(
+        editCategory.id,
+        editCategory.name,
+        editCategory.color,
+        editCategory.defaultFaviconId
+      );
       setIsEditOpen(false);
       setEditCategory(null);
       toast.success('Category updated!');
-    } catch (error) {
+    } catch {
       toast.error('Failed to update category');
     } finally {
       setIsUpdating(false);
@@ -236,7 +304,7 @@ export function Sidebar({
       if (onReorderCategories) {
         try {
           await onReorderCategories(newOrder.map((c) => c.id));
-        } catch (error) {
+        } catch {
           toast.error('Failed to reorder categories');
         }
       }
@@ -251,12 +319,12 @@ export function Sidebar({
 
     setIsCreating(true);
     try {
-      await onCreateCategory(newCategory.name, newCategory.color);
-      setNewCategory({ name: '', color: colorOptions[0] });
+      await onCreateCategory(newCategory.name, newCategory.color, newCategory.defaultFaviconId);
+      setNewCategory({ name: '', color: colorOptions[0], defaultFaviconId: null });
       setNewCustomColor(colorOptions[0]);
       setIsOpen(false);
       toast.success('Category created!');
-    } catch (error) {
+    } catch {
       toast.error('Failed to create category');
     } finally {
       setIsCreating(false);
@@ -275,7 +343,7 @@ export function Sidebar({
     try {
       await logout();
       router.push('/login');
-    } catch (error) {
+    } catch {
       toast.error('Failed to logout');
     }
   };
@@ -374,7 +442,7 @@ export function Sidebar({
                     </svg>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="font-semibold text-lg">New Category</DialogTitle>
                   </DialogHeader>
@@ -438,6 +506,10 @@ export function Sidebar({
                         </div>
                       </div>
                     </div>
+                    <CategoryFaviconPicker
+                      value={newCategory.defaultFaviconId}
+                      onChange={(defaultFaviconId) => setNewCategory({ ...newCategory, defaultFaviconId })}
+                    />
                     <Button
                       onClick={handleCreateCategory}
                       disabled={isCreating}
@@ -482,7 +554,7 @@ export function Sidebar({
 
         {/* Edit Category Dialog */}
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-semibold text-lg">Edit Category</DialogTitle>
             </DialogHeader>
@@ -543,6 +615,10 @@ export function Sidebar({
                     </div>
                   </div>
                 </div>
+                <CategoryFaviconPicker
+                  value={editCategory.defaultFaviconId}
+                  onChange={(defaultFaviconId) => setEditCategory({ ...editCategory, defaultFaviconId })}
+                />
                 <Button
                   onClick={handleUpdateCategory}
                   disabled={isUpdating}

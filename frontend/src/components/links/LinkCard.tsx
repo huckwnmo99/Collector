@@ -9,15 +9,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Link as LinkType } from '@/types';
-import { getFallbackFaviconDataUrl } from '@/lib/fallbackFavicons';
+import { getFallbackFaviconDataUrl, normalizeFallbackFaviconDataUrl } from '@/lib/fallbackFavicons';
 
 interface LinkCardProps {
   link: LinkType;
+  categoryDefaultFaviconId?: string | null;
   onEdit: (link: LinkType) => void;
   onDelete: (id: string) => void;
 }
 
-export function LinkCard({ link, onEdit, onDelete }: LinkCardProps) {
+export function LinkCard({ link, categoryDefaultFaviconId, onEdit, onDelete }: LinkCardProps) {
   const [imageError, setImageError] = useState(false);
 
   const getFaviconUrl = (url: string) => {
@@ -30,8 +31,9 @@ export function LinkCard({ link, onEdit, onDelete }: LinkCardProps) {
   };
 
   const showFavicon = link.show_favicon !== false;
-  const faviconUrl = showFavicon ? (link.favicon || getFaviconUrl(link.url)) : null;
-  const fallbackFaviconUrl = getFallbackFaviconDataUrl();
+  const linkFavicon = normalizeFallbackFaviconDataUrl(link.favicon) || link.favicon;
+  const faviconUrl = showFavicon ? (linkFavicon || getFaviconUrl(link.url)) : null;
+  const fallbackFaviconUrl = getFallbackFaviconDataUrl(categoryDefaultFaviconId);
 
   const handleClick = () => {
     window.open(link.url, '_blank', 'noopener,noreferrer');

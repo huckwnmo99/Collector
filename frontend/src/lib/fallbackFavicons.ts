@@ -152,6 +152,46 @@ export const fallbackFavicons: FallbackFavicon[] = [
 ];
 
 const dataUrlCache = new Map<string, string>();
+const legacyDataUrlCache = new Map<string, string>();
+
+const lightDetailColors = [
+  '#ffffff',
+  '#fff',
+  '#eaf4ff',
+  '#fff1d8',
+  '#f8e7ff',
+  '#ffd9e1',
+  '#f2f2f7',
+  '#e9fbff',
+  '#fff3df',
+  '#e8fbff',
+  '#ffdede',
+  '#f5f5f7',
+  '#f7e6ff',
+];
+
+function replaceSvgColor(svg: string, from: string, to: string) {
+  return svg.split(from).join(to);
+}
+
+function getLightBackgroundSvg(svg: string) {
+  let normalized = svg;
+
+  for (const color of [...lightDetailColors].sort((a, b) => b.length - a.length)) {
+    normalized = replaceSvgColor(normalized, color, '#1f2937');
+  }
+
+  normalized = normalized.replace(
+    /(<rect width="64" height="64" rx="16" fill=")[^"]+("\/>)/,
+    '$1#ffffff$2'
+  );
+
+  return normalized;
+}
+
+function getSvgDataUrl(svg: string) {
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
 
 export function getFallbackFavicon(id?: string | null): FallbackFavicon {
   return (
@@ -161,13 +201,31 @@ export function getFallbackFavicon(id?: string | null): FallbackFavicon {
   );
 }
 
+export function isFallbackFaviconId(id: unknown): id is string {
+  return typeof id === 'string' && fallbackFavicons.some((favicon) => favicon.id === id);
+}
+
+export function normalizeFallbackFaviconId(id: unknown): string | null {
+  return isFallbackFaviconId(id) ? id : null;
+}
+
 export function getFallbackFaviconDataUrl(id?: string | null): string {
   const favicon = getFallbackFavicon(id);
   const cached = dataUrlCache.get(favicon.id);
   if (cached) return cached;
 
-  const dataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(favicon.svg)}`;
+  const dataUrl = getSvgDataUrl(getLightBackgroundSvg(favicon.svg));
   dataUrlCache.set(favicon.id, dataUrl);
+  return dataUrl;
+}
+
+function getLegacyFallbackFaviconDataUrl(id?: string | null): string {
+  const favicon = getFallbackFavicon(id);
+  const cached = legacyDataUrlCache.get(favicon.id);
+  if (cached) return cached;
+
+  const dataUrl = getSvgDataUrl(favicon.svg);
+  legacyDataUrlCache.set(favicon.id, dataUrl);
   return dataUrl;
 }
 
@@ -177,7 +235,12 @@ export function getFallbackFaviconIdFromDataUrl(dataUrl?: string | null): string
   }
 
   return (
-    fallbackFavicons.find((favicon) => getFallbackFaviconDataUrl(favicon.id) === dataUrl)?.id ||
+    fallbackFavicons.find((favicon) => {
+      return (
+        getFallbackFaviconDataUrl(favicon.id) === dataUrl ||
+        getLegacyFallbackFaviconDataUrl(favicon.id) === dataUrl
+      );
+    })?.id ||
     null
   );
 }
@@ -187,5 +250,7 @@ export function normalizeFallbackFaviconDataUrl(dataUrl: unknown): string | unde
     return undefined;
   }
 
-  return getFallbackFaviconIdFromDataUrl(dataUrl) ? dataUrl : undefined;
+  const fallbackId = getFallbackFaviconIdFromDataUrl(dataUrl);
+
+  return fallbackId ? getFallbackFaviconDataUrl(fallbackId) : undefined;
 }

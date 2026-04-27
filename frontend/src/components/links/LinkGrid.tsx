@@ -35,10 +35,12 @@ interface LinkGridProps {
 // Sortable Link Card Wrapper
 function SortableLinkCard({
   link,
+  categoryDefaultFaviconId,
   onEdit,
   onDelete,
 }: {
   link: Link;
+  categoryDefaultFaviconId?: string | null;
   onEdit: (link: Link) => void;
   onDelete: (id: string) => void;
 }) {
@@ -64,6 +66,7 @@ function SortableLinkCard({
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <CardComponent
         link={link}
+        categoryDefaultFaviconId={categoryDefaultFaviconId}
         onEdit={onEdit}
         onDelete={onDelete}
       />
@@ -101,6 +104,11 @@ export function LinkGrid({
       const newOrder = arrayMove(links, oldIndex, newIndex);
       await onReorder(newOrder.map((l) => l.id));
     }
+  };
+
+  const getCategoryDefaultFaviconId = (categoryId: string | null) => {
+    if (!categoryId) return null;
+    return categories.find((category) => category.id === categoryId)?.default_favicon_id || null;
   };
 
   if (isLoading) {
@@ -213,6 +221,7 @@ export function LinkGrid({
                         <SortableLinkCard
                           key={link.id}
                           link={link}
+                          categoryDefaultFaviconId={category.default_favicon_id}
                           onEdit={onEdit}
                           onDelete={onDelete}
                         />
@@ -253,6 +262,7 @@ export function LinkGrid({
                       <SortableLinkCard
                         key={link.id}
                         link={link}
+                        categoryDefaultFaviconId={null}
                         onEdit={onEdit}
                         onDelete={onDelete}
                       />
@@ -305,6 +315,7 @@ export function LinkGrid({
                       <SortableLinkCard
                         key={link.id}
                         link={link}
+                        categoryDefaultFaviconId={category.default_favicon_id}
                         onEdit={onEdit}
                         onDelete={onDelete}
                       />
@@ -345,6 +356,7 @@ export function LinkGrid({
                     <SortableLinkCard
                       key={link.id}
                       link={link}
+                      categoryDefaultFaviconId={null}
                       onEdit={onEdit}
                       onDelete={onDelete}
                     />
@@ -374,6 +386,7 @@ export function LinkGrid({
             <SortableLinkCard
               key={link.id}
               link={link}
+              categoryDefaultFaviconId={getCategoryDefaultFaviconId(link.category_id)}
               onEdit={onEdit}
               onDelete={onDelete}
             />

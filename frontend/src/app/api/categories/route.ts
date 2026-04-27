@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
+import { normalizeFallbackFaviconId } from '@/lib/fallbackFavicons';
 
 // GET /api/categories - Get all categories for user
 export async function GET() {
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { name, color } = await request.json();
+    const { name, color, defaultFaviconId } = await request.json();
 
     if (!name) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
@@ -62,6 +63,7 @@ export async function POST(request: NextRequest) {
         name,
         color: color || '#007AFF',
         order_index: newOrderIndex,
+        default_favicon_id: normalizeFallbackFaviconId(defaultFaviconId),
       })
       .select('*')
       .single();

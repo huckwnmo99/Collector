@@ -98,13 +98,13 @@ export default function DashboardPage() {
   }, [isAuthenticated, fetchCategories, fetchLinks]);
 
   // Category actions
-  const handleCreateCategory = async (name: string, color: string) => {
-    const response = await api.post('/categories', { name, color });
+  const handleCreateCategory = async (name: string, color: string, defaultFaviconId?: string | null) => {
+    const response = await api.post('/categories', { name, color, defaultFaviconId });
     setCategories([...categories, response.data.category]);
   };
 
-  const handleUpdateCategory = async (id: string, name: string, color: string) => {
-    const response = await api.put(`/categories/${id}`, { name, color });
+  const handleUpdateCategory = async (id: string, name: string, color: string, defaultFaviconId?: string | null) => {
+    const response = await api.put(`/categories/${id}`, { name, color, defaultFaviconId });
     setCategories(categories.map((c) => (c.id === id ? response.data.category : c)));
   };
 
@@ -213,6 +213,7 @@ export default function DashboardPage() {
         categoryId: targetCategory.id,
         categoryName: targetCategory.name,
         categoryColor: targetCategory.color,
+        defaultFaviconId: targetCategory.default_favicon_id,
       });
     } catch (error) {
       console.error('Failed to open widget:', error);

@@ -3,6 +3,7 @@ interface WidgetCategoryData {
   categoryId: string;
   categoryName: string;
   categoryColor: string;
+  defaultFaviconId?: string | null;
 }
 
 type UpdateStatus =

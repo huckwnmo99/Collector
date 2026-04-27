@@ -3,12 +3,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from '@/types';
 import api from '@/lib/api';
-import { getFallbackFaviconDataUrl } from '@/lib/fallbackFavicons';
+import { getFallbackFaviconDataUrl, normalizeFallbackFaviconDataUrl } from '@/lib/fallbackFavicons';
 
 interface CategoryData {
   categoryId: string;
   categoryName: string;
   categoryColor: string;
+  defaultFaviconId?: string | null;
 }
 
 const themes = {
@@ -92,6 +93,15 @@ function toOpenableLocalPath(url: string) {
   }
 }
 
+function getHttpErrorStatus(error: unknown) {
+  if (typeof error !== 'object' || error === null || !('response' in error)) {
+    return undefined;
+  }
+
+  const response = (error as { response?: { status?: unknown } }).response;
+  return typeof response?.status === 'number' ? response.status : undefined;
+}
+
 export default function WidgetPage() {
   const [categories, setCategories] = useState<CategoryData[]>([]);
   const [activeCategory, setActiveCategory] = useState<CategoryData | null>(null);
@@ -119,6 +129,7 @@ export default function WidgetPage() {
       categoryId,
       categoryName,
       categoryColor: params.get('categoryColor') || '#007AFF',
+      defaultFaviconId: params.get('defaultFaviconId'),
     };
 
     setCategories((prev) => {
@@ -266,9 +277,9 @@ export default function WidgetPage() {
         });
         setLinks(response.data.links || []);
         setIsLoading(false);
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Retry on 401 - user might not be logged in yet (widget restored before auth)
-        if (error.response?.status === 401 && !cancelled && retryCount < 10) {
+        if (getHttpErrorStatus(error) === 401 && !cancelled && retryCount < 10) {
           retryCount++;
           retryTimeout = setTimeout(fetchLinks, 3000);
           return; // Keep isLoading true during retries to avoid flickering
@@ -371,6 +382,7 @@ export default function WidgetPage() {
           categoryId: cat.categoryId,
           categoryName: cat.categoryName,
           categoryColor: cat.categoryColor,
+          defaultFaviconId: cat.defaultFaviconId,
         });
         // Remove from local state
         setCategories((prev) => {
@@ -394,7 +406,7 @@ export default function WidgetPage() {
   const t = isDark ? themes.dark : themes.light;
   const accentColor = activeCategory?.categoryColor || '#007AFF';
   const hasMultipleCategories = categories.length > 1;
-  const fallbackFaviconUrl = getFallbackFaviconDataUrl();
+  const fallbackFaviconUrl = getFallbackFaviconDataUrl(activeCategory?.defaultFaviconId);
 
   return (
     <div
@@ -466,7 +478,7 @@ export default function WidgetPage() {
             borderBottom: `1px solid ${t.headerBorder}`,
             flexShrink: 0,
             position: 'relative',
-            // @ts-ignore
+            // @ts-expect-error Electron CSS extension
             WebkitAppRegion: 'drag',
           }}
         >
@@ -478,7 +490,7 @@ export default function WidgetPage() {
               gap: '8px',
               minWidth: 0,
               cursor: hasMultipleCategories ? 'pointer' : 'grab',
-              // @ts-ignore
+              // @ts-expect-error Electron CSS extension
               WebkitAppRegion: hasMultipleCategories ? 'no-drag' : 'drag',
             }}
             onClick={hasMultipleCategories ? () => setShowDropdown(!showDropdown) : undefined}
@@ -573,7 +585,7 @@ export default function WidgetPage() {
               justifyContent: 'center',
               cursor: 'pointer',
               flexShrink: 0,
-              // @ts-ignore
+              // @ts-expect-error Electron CSS extension
               WebkitAppRegion: 'no-drag',
               color: t.closeIcon,
               fontSize: '14px',
@@ -603,7 +615,7 @@ export default function WidgetPage() {
                 WebkitBackdropFilter: 'blur(20px)',
                 borderBottom: `1px solid ${t.border}`,
                 zIndex: 50,
-                // @ts-ignore
+                // @ts-expect-error Electron CSS extension
                 WebkitAppRegion: 'no-drag',
               }}
             >
@@ -934,7 +946,7 @@ export default function WidgetPage() {
                     </svg>
                   ) : link.show_favicon && link.favicon ? (
                     <img
-                      src={link.favicon}
+                      src={normalizeFallbackFaviconDataUrl(link.favicon) || link.favicon}
                       alt=""
                       style={{
                         width: '24px',

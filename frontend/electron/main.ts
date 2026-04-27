@@ -9,6 +9,7 @@ interface WidgetCategoryData {
   categoryId: string;
   categoryName: string;
   categoryColor: string;
+  defaultFaviconId?: string | null;
 }
 
 interface WidgetState {
@@ -586,6 +587,7 @@ async function createWidgetWindow(
     categoryId: activeCategory.categoryId,
     categoryName: activeCategory.categoryName,
     categoryColor: activeCategory.categoryColor,
+    ...(activeCategory.defaultFaviconId ? { defaultFaviconId: activeCategory.defaultFaviconId } : {}),
   });
 
   await loadRoute(widgetWindow, `/widget?${query.toString()}`);

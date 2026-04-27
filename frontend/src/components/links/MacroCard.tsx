@@ -9,14 +9,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Link as LinkType } from '@/types';
+import { getFallbackFaviconDataUrl, normalizeFallbackFaviconDataUrl } from '@/lib/fallbackFavicons';
 
 interface MacroCardProps {
   link: LinkType;
+  categoryDefaultFaviconId?: string | null;
   onEdit: (link: LinkType) => void;
   onDelete: (id: string) => void;
 }
 
-export function MacroCard({ link, onEdit, onDelete }: MacroCardProps) {
+export function MacroCard({ link, categoryDefaultFaviconId, onEdit, onDelete }: MacroCardProps) {
   const [imageError, setImageError] = useState(false);
   const items = link.macro_items || [];
 
@@ -24,7 +26,9 @@ export function MacroCard({ link, onEdit, onDelete }: MacroCardProps) {
   const primaryFavicon = items.find(
     (item) => item.resolved_favicon || item.custom_favicon
   );
-  const faviconUrl = primaryFavicon?.resolved_favicon || primaryFavicon?.custom_favicon || null;
+  const rawFaviconUrl = primaryFavicon?.resolved_favicon || primaryFavicon?.custom_favicon || null;
+  const faviconUrl = normalizeFallbackFaviconDataUrl(rawFaviconUrl) || rawFaviconUrl;
+  const fallbackFaviconUrl = getFallbackFaviconDataUrl(categoryDefaultFaviconId);
 
   const handleClick = () => {
     if (items.length === 0) return;
@@ -116,9 +120,11 @@ export function MacroCard({ link, onEdit, onDelete }: MacroCardProps) {
               onError={() => setImageError(true)}
             />
           ) : (
-            <svg className="w-6 h-6 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L12 12.75 6.429 9.75m11.142 0l4.179 2.25L12 17.25 2.25 12l4.179-2.25m11.142 0l4.179 2.25L12 22.5l-9.75-5.25 4.179-2.25" />
-            </svg>
+            <img
+              src={fallbackFaviconUrl}
+              alt=""
+              className="w-8 h-8 md:w-10 md:h-10 object-contain rounded-md"
+            />
           )}
         </div>
 

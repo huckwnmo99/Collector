@@ -70,6 +70,7 @@ export interface DbCategory {
   user_id: string;
   name: string;
   color: string;
+  default_favicon_id: string | null;
   order_index: number;
   created_at: string;
 }

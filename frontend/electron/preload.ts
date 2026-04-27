@@ -24,12 +24,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   installUpdate: () => ipcRenderer.invoke('app:install-update'),
   openUrls: (urls: string[]) => ipcRenderer.invoke('open-urls', urls),
   openPath: (targetPath: string) => ipcRenderer.send('open-path', targetPath),
-  openWidget: (category: { categoryId: string; categoryName: string; categoryColor: string }) =>
+  openWidget: (category: { categoryId: string; categoryName: string; categoryColor: string; defaultFaviconId?: string | null }) =>
     ipcRenderer.invoke('open-widget', category),
   sendToggleWidget: () => ipcRenderer.send('widget:toggle'),
   closeWidgetSelf: () => ipcRenderer.send('widget:close-self'),
   removeCategory: (categoryId: string) => ipcRenderer.send('widget:remove-category', categoryId),
-  detachCategory: (data: { categoryId: string; categoryName: string; categoryColor: string }) =>
+  detachCategory: (data: { categoryId: string; categoryName: string; categoryColor: string; defaultFaviconId?: string | null }) =>
     ipcRenderer.send('widget:detach-category', data),
   onSetCategory: (callback: IpcCallback) => onChannel('widget:set-category', callback),
   onAddCategories: (callback: IpcCallback) => onChannel('widget:add-categories', callback),

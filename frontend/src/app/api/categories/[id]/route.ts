@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
+import { normalizeFallbackFaviconId } from '@/lib/fallbackFavicons';
 
 // PUT /api/categories/[id] - Update a category
 export async function PUT(
@@ -15,7 +16,7 @@ export async function PUT(
     }
 
     const { id } = await params;
-    const { name, color } = await request.json();
+    const { name, color, defaultFaviconId } = await request.json();
 
     // Verify ownership
     const { data: existingCategory } = await supabaseAdmin
@@ -29,9 +30,12 @@ export async function PUT(
       return NextResponse.json({ error: 'Category not found' }, { status: 404 });
     }
 
-    const updateData: Record<string, string> = {};
+    const updateData: Record<string, string | null> = {};
     if (name) updateData.name = name;
     if (color) updateData.color = color;
+    if (defaultFaviconId !== undefined) {
+      updateData.default_favicon_id = normalizeFallbackFaviconId(defaultFaviconId);
+    }
 
     const { data: category, error } = await supabaseAdmin
       .from('categories')
