@@ -216,7 +216,7 @@ function installAppUpdate(): UpdateStatusPayload {
     });
   }
 
-  autoUpdater.quitAndInstall(false, true);
+  autoUpdater.quitAndInstall(true, true);
   return makeUpdatePayload('downloaded', 'Restarting to install the update.', {
     version: updateDownloadedVersion,
     percent: 100,
