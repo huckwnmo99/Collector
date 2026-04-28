@@ -67,9 +67,13 @@ publish:
   repo: Collector_program_update
 
 nsis:
-  oneClick: true
+  oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: false
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: Web Collector
+  installerIcon: icon.ico
+  uninstallerIcon: icon.ico
+  installerSidebar: installer-sidebar.bmp
+  uninstallerSidebar: installer-sidebar.bmp

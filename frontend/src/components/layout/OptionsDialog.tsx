@@ -27,6 +27,26 @@ const idleUpdateStatus: UpdateStatusPayload = {
   currentVersion: '',
 };
 
+function getUpdateRows(updateStatus: UpdateStatusPayload) {
+  const isDownloaded = updateStatus.status === 'downloaded';
+  const isDownloading = updateStatus.status === 'downloading';
+  const hasUpdate = updateStatus.status === 'available' || isDownloading || isDownloaded;
+  const downloadPercent = isDownloaded ? 100 : isDownloading ? Math.min(updateStatus.percent ?? 0, 100) : 0;
+
+  return [
+    {
+      label: 'Download check',
+      value: hasUpdate ? '100%' : updateStatus.status === 'checking' ? 'Checking' : 'Ready',
+      percent: hasUpdate ? 100 : updateStatus.status === 'checking' ? 45 : 0,
+    },
+    {
+      label: 'Apply installer',
+      value: isDownloaded ? 'Ready' : isDownloading ? `${downloadPercent}%` : 'Waiting',
+      percent: downloadPercent,
+    },
+  ];
+}
+
 export function OptionsDialog() {
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -137,6 +157,12 @@ export function OptionsDialog() {
     ) : (
       <RefreshCw className={updateStatus.status === 'checking' ? 'animate-spin' : ''} />
     );
+  const updateRows = getUpdateRows(updateStatus);
+  const showUpdateProgress =
+    updateStatus.status === 'checking' ||
+    updateStatus.status === 'available' ||
+    updateStatus.status === 'downloading' ||
+    updateStatus.status === 'downloaded';
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -242,12 +268,25 @@ export function OptionsDialog() {
                   {updateButtonLabel}
                 </Button>
               </div>
-              {updateStatus.status === 'downloading' && (
-                <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all duration-300"
-                    style={{ width: `${Math.min(updateStatus.percent ?? 0, 100)}%` }}
-                  />
+              {showUpdateProgress && (
+                <div className="grid gap-2">
+                  {updateRows.map((row) => (
+                    <div
+                      key={row.label}
+                      className="rounded-md border border-border/70 bg-background/80 p-2.5"
+                    >
+                      <div className="mb-2 flex items-center justify-between gap-3 text-xs">
+                        <span className="font-medium text-foreground">{row.label}</span>
+                        <span className="text-muted-foreground">{row.value}</span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-foreground transition-all duration-300"
+                          style={{ width: `${row.percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
